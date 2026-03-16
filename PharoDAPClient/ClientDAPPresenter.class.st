@@ -74,6 +74,22 @@ ClientDAPPresenter >> colorForMessage: messageAsDict [
 	^ Color white
 ]
 
+{ #category : 'protocol' }
+ClientDAPPresenter >> continue [
+
+	self continue: 1
+]
+
+{ #category : 'protocol' }
+ClientDAPPresenter >> continue: aThreadId [
+
+	| args request |
+	args := DAPContinueArguments new threadId: aThreadId.
+	request := DAPContinueRequest withArguments: args.
+
+	clientDAP sendRequest: request
+]
+
 { #category : 'layout' }
 ClientDAPPresenter >> defaultLayout [
 
@@ -155,9 +171,10 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Stack Trace' iconName: #browse do: #stackTrace.
 	self addCommand: 'Scopes' iconName: #folder ask: 'Frame Id ?' do: #scopes:.
 	self addCommand: 'Variables' iconName: #table ask: 'Variables Reference ?' do: #variables:.
+	self addCommand: 'Continue' iconName: #go do: #continue. 
 	self addCommand: 'Next' iconName: #right do: #next.
 	self addCommand: 'Step In' iconName: #into do: #stepInDAP.
-	self addCommand: 'Step Out' iconName: #over do: #stepOut.	
+	self addCommand: 'Step Out' iconName: #over do: #stepOut.
 	self addCommand: 'Disconnect' iconName: #close do: #closeConnection
 ]
 
