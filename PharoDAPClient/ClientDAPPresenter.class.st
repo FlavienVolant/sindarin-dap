@@ -281,7 +281,20 @@ ClientDAPPresenter >> stackTrace [
 ClientDAPPresenter >> stackTrace: aThreadId [
 
 	| args request |
-	args := DAPStackTraceArguments new threadId: aThreadId.
+	args := DAPStackTraceArguments new
+		        threadId: aThreadId;
+		        startFrame: 0;
+		        levels: 1;
+		        format: {
+				        (#parameters -> true).
+				        (#parameterTypes -> true).
+				        (#parameterNames -> true).
+				        (#parameterValues -> true).
+				        (#line -> true).
+				        (#module -> true).
+				        (#includeAll -> true) } asDictionary;
+		        yourself.
+
 	request := DAPStackTraceRequest withArguments: args.
 
 	clientDAP sendRequest: request
