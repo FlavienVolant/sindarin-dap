@@ -68,7 +68,7 @@ DAPHistory >> messages [
 			  | tA tB |
 			  tA := a at: #timestamp ifAbsent: [ DateAndTime now ].
 			  tB := b at: #timestamp ifAbsent: [ DateAndTime now ].
-			  tA <= tB ]
+			  tA >= tB ]
 ]
 
 { #category : 'observers' }
