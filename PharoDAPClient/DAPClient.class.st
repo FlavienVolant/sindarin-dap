@@ -3,19 +3,42 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'socket',
-		'host',
-		'port',
 		'seq',
 		'buffer',
 		'listenerProcess',
 		'eventHandlers',
 		'responseHandlers',
-		'dapHistory'
+		'dapHistory',
+		'state',
+		'pendingRequests',
+		'stateChangedCallBack'
 	],
 	#category : 'PharoDAPClient-Model',
 	#package : 'PharoDAPClient',
 	#tag : 'Model'
 }
+
+{ #category : 'requests' }
+DAPClient >> attach: attachArguments [
+
+	| request |
+	
+	(self
+		 verifyStateForRequest: #attach:
+		 arguments: attachArguments
+		 requiredState: #initializeResponse) ifFalse: [ ^ self ].
+	
+	request := DAPAttachRequest withArguments: attachArguments.
+
+	self sendRequest: request onResponse: [ :rest |
+			eventHandlers
+				at: 'stopped' put: [ :event | self state: #stopped ];
+				at: 'continued' put: [ :event | self state: #running ];
+				at: 'exited' put: [ :event | self state: #disconnected ];
+				at: 'terminated' put: [ :event | self state: #terminated ].
+			self state: #running ].
+	self state: #launching
+]
 
 { #category : 'connection open/close' }
 DAPClient >> closeConnection [
@@ -26,18 +49,46 @@ DAPClient >> closeConnection [
 
 	socket ifNotNil: [
 			socket close.
-			socket := nil ]
+			socket := nil ].
+
+	eventHandlers keysAndValuesRemove: [ :key :value | true ].
+	responseHandlers keysAndValuesRemove: [ :key :value | true ].
+	self state: #disconnected
+]
+
+{ #category : 'requests' }
+DAPClient >> configurationDone [
+
+	| request |
+	(self
+		 verifyStateForRequest: #configurationDone
+		 arguments: nil
+		 requiredState: #initialized) ifFalse: [ ^ self ].
+
+	request := DAPConfigurationDoneRequest new.
+	self
+		sendRequest: request
+		onResponse: [ :resp | self state: #configured ]
 ]
 
 { #category : 'connection open/close' }
 DAPClient >> connectTo: aHostName port: aPort [
 
-	host := aHostName.
-	port := aPort.
 	socket := SocketStream
 		          openConnectionToHostNamed: aHostName
 		          port: aPort.
-	socket noTimeout
+	socket noTimeout.
+	state := #connecting
+]
+
+{ #category : 'requests' }
+DAPClient >> continue: continueArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+
+	request := DAPContinueRequest withArguments: continueArguments.
+	self sendRequest: request
 ]
 
 { #category : 'accessing' }
@@ -61,6 +112,7 @@ DAPClient >> handleEvent: eventAsDict [
 DAPClient >> handleResponse: responseAsDict [
 
 	| request_seq callback |
+
 	dapHistory addResponse: responseAsDict.
 
 	request_seq := responseAsDict at: 'request_seq'.
@@ -78,6 +130,59 @@ DAPClient >> initialize [
 	responseHandlers := Dictionary new.
 	eventHandlers := Dictionary new.
 	dapHistory := DAPHistory new.
+	pendingRequests := OrderedCollection new.
+	self state: #disconnected
+]
+
+{ #category : 'requests' }
+DAPClient >> initialize: initializeArguments [
+
+	| request |
+	(self
+		 verifyStateForRequest: #initialize:
+		 arguments: initializeArguments
+		 requiredState: #connecting) ifFalse: [ ^ self ].
+
+	request := DAPInitializeRequest withArguments: initializeArguments.
+	self
+		sendRequest: request
+		onResponse: [ :resp | Transcript showCr: 'hello'. self state: #initializeResponse ].
+
+	eventHandlers at: 'initialized' put: [ :event |
+			self state: #initialized.
+			eventHandlers removeKey: 'initialized' ifAbsent: [ ^ self ] ].
+	self state: #initializing
+]
+
+{ #category : 'requests' }
+DAPClient >> launch: launchArguments [
+
+	| request |
+	
+	(self
+		 verifyStateForRequest: #launch:
+		 arguments: launchArguments
+		 requiredState: #initializeResponse) ifFalse: [ ^ self ].
+	
+	request := DAPLaunchRequest withArguments: launchArguments.
+
+	self sendRequest: request onResponse: [ :rest |
+			eventHandlers
+				at: 'stopped' put: [ :event | self state: #stopped ];
+				at: 'continued' put: [ :event | self state: #running ];
+				at: 'exited' put: [ :event | self state: #disconnected ];
+				at: 'terminated' put: [ :event | self state: #terminated ].
+			self state: #running ].
+	self state: #launching
+]
+
+{ #category : 'requests' }
+DAPClient >> next: nextArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPNextRequest withArguments: nextArguments.
+	self sendRequest: request
 ]
 
 { #category : 'initialization' }
@@ -89,8 +194,6 @@ DAPClient >> onEvent: eventName do: block [
 DAPClient >> readHeadersAsDict [
 
 	| dict line |
-	Transcript showCr: '--- READING HEADER ---'.
-
 	dict := Dictionary new.
 
 	[
@@ -98,15 +201,11 @@ DAPClient >> readHeadersAsDict [
 		line := socket nextLineCrLf.
 		line ifNil: [ ^ nil ].
 
-		line isEmpty ifTrue: [
-				Transcript showCr: '--- END HEADER ---'.
-				^ dict ].
-		Transcript showCr: line asString.
-		
+		line isEmpty ifTrue: [ ^ dict ].
+
 		key := (line asString copyUpTo: $:) asLowercase.
 		value := (line asString copyAfter: $:) trimBoth.
-		dict at: key put: value 
-	] repeat
+		dict at: key put: value ] repeat
 ]
 
 { #category : 'communication' }
@@ -118,6 +217,15 @@ DAPClient >> readMessageAsDict [
 		                 asNumber.
 	body := socket next: contentLength.
 	^ STONJSON fromString: body
+]
+
+{ #category : 'requests' }
+DAPClient >> scopes: scopesArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPScopesRequest withArguments: scopesArguments.
+	self sendRequest: request
 ]
 
 { #category : 'communication' }
@@ -143,14 +251,46 @@ DAPClient >> sendRequest: aDAPRequest onResponse: callBackBlock [
 	header := 'Content-Length: ' , bytes size printString , String crlf
 	          , String crlf.
 
-	Transcript showCr: '>>> Start Send'.
-	Transcript showCr:
-		header , (STONJSON toStringPretty: aDAPRequest asDAPJSON).
-	Transcript showCr: '>>> End Send'.
-
 	socket nextPutAll: header asByteArray.
 	socket nextPutAll: bytes.
 	socket flush
+]
+
+{ #category : 'requests' }
+DAPClient >> setBreakpoints: setBreakPointsArguments [
+
+	| request |
+	(self
+		 verifyStateForRequest: #setBreakpoints:
+		 arguments: setBreakPointsArguments
+		 requiredState: #initialized) ifFalse: [ ^ self ].
+
+	request := DAPSetBreakpointsRequest withArguments:
+		           setBreakPointsArguments.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
+DAPClient >> setFunctionBreakpoints: setFunctionBreakpointsArguments [
+
+	| request |
+	(self
+		 verifyStateForRequest: #setFunctionBreakpoints:
+		 arguments: setFunctionBreakpointsArguments
+		 requiredState: #initialized) ifFalse: [ ^ self ].
+
+	request := DAPSetFunctionBreakpointsRequest withArguments:
+		           setFunctionBreakpointsArguments.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
+DAPClient >> stackTrace: stackTraceArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPStackTraceRequest withArguments: stackTraceArguments.
+	self sendRequest: request
 ]
 
 { #category : 'communication' }
@@ -160,11 +300,72 @@ DAPClient >> startListening [
 		[
 			| json |
 			json := self readMessageAsDict.
-			Transcript showCr: (STONJSON toStringPretty: json).
 			
 			(json at: #type) = 'event' ifTrue: [ self handleEvent: json ].
 			(json at: #type) = 'response' ifTrue: [ self handleResponse: json ].
 
 		] repeat 
 	] fork
+]
+
+{ #category : 'accessing' }
+DAPClient >> state [
+
+	^ state
+]
+
+{ #category : 'states' }
+DAPClient >> state: aState [
+
+	state := aState.
+
+	pendingRequests do: [ :req |
+		(req canExecute: state) ifTrue: [ req execute: self ] ].
+
+	stateChangedCallBack ifNotNil: [ stateChangedCallBack value: aState ]
+]
+
+{ #category : 'accessing' }
+DAPClient >> stateChangedCallBack: aBlock [
+
+	stateChangedCallBack := aBlock 
+]
+
+{ #category : 'requests' }
+DAPClient >> stepIn: stepInArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPStepInRequest withArguments: stepInArguments.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
+DAPClient >> stepOut: stepOutArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPStepOutRequest withArguments: stepOutArguments.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
+DAPClient >> variables: variablesArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPVariablesRequest withArguments: variablesArguments.
+	self sendRequest: request
+]
+
+{ #category : 'states' }
+DAPClient >> verifyStateForRequest: requestSymbole arguments: args requiredState: requiredState [
+
+	state = requiredState ifFalse: [
+			pendingRequests add: (PendingRequest
+					 request: requestSymbole
+					 arguments: args
+					 requiredState: requiredState).
+			^ false ].
+	^ true
 ]
