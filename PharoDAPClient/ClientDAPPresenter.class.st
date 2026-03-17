@@ -8,7 +8,8 @@ Class {
 		'requestPresenter',
 		'responsePresenter',
 		'clientDAP',
-		'messageListPresenter'
+		'messageListPresenter',
+		'statePresenter'
 	],
 	#category : 'PharoDAPClient-Presenters',
 	#package : 'PharoDAPClient',
@@ -56,6 +57,7 @@ ClientDAPPresenter >> askInteger: aLabel do: aBlock [
 { #category : 'protocol' }
 ClientDAPPresenter >> closeConnection [
 
+	clientDAP stateChangedCallBack: [ :state |  ].
 	clientDAP closeConnection
 ]
 
@@ -83,18 +85,20 @@ ClientDAPPresenter >> continue [
 { #category : 'protocol' }
 ClientDAPPresenter >> continue: aThreadId [
 
-	| args request |
+	| args |
 	args := DAPContinueArguments new threadId: aThreadId.
-	request := DAPContinueRequest withArguments: args.
-
-	clientDAP sendRequest: request
+	clientDAP continue: args
 ]
 
 { #category : 'layout' }
 ClientDAPPresenter >> defaultLayout [
 
 	^ SpBoxLayout newTopToBottom
-		  add: #commandBarPresenter height: 40;
+		  add: (SpBoxLayout newLeftToRight
+				   add: #commandBarPresenter;
+				   add: #statePresenter width: 100;
+				   yourself)
+		  height: 40;
 		  add: (SpPanedLayout newLeftToRight
 				   add: #messageListPresenter;
 				   add: (SpPanedLayout newTopToBottom
@@ -208,7 +212,9 @@ ClientDAPPresenter >> initializePresenters [
 	self initializeMessageList.
 	self initializeRequest.
 	self initializeResponse.
-
+	self initializeState.
+	
+	clientDAP stateChangedCallBack: [ :state | self onStateChanged: state ].
 	clientDAP dapHistory addObserver: self.
 
 	self updateMessageList
@@ -229,6 +235,13 @@ ClientDAPPresenter >> initializeResponse [
 ]
 
 { #category : 'initialization' }
+ClientDAPPresenter >> initializeState [
+
+	statePresenter := self newLabel.
+	statePresenter label: clientDAP state asString
+]
+
+{ #category : 'initialization' }
 ClientDAPPresenter >> initializeWindow: aWindowPresenter [
 	
 	super initializeWindow: aWindowPresenter.
@@ -246,11 +259,15 @@ ClientDAPPresenter >> next [
 { #category : 'protocol' }
 ClientDAPPresenter >> next: aThreadId [
 
-	| args request |
+	| args |
 	args := DAPNextArguments new threadId: aThreadId.
-	request := DAPNextRequest withArguments: args.
+	clientDAP next: args
+]
 
-	clientDAP sendRequest: request
+{ #category : 'event handling' }
+ClientDAPPresenter >> onStateChanged: aState [
+	
+	statePresenter label: aState 
 ]
 
 { #category : 'initialization' }
@@ -264,11 +281,9 @@ ClientDAPPresenter >> open [
 { #category : 'protocol' }
 ClientDAPPresenter >> scopes: aFrameId [
 
-	| args request |
+	| args |
 	args := DAPScopesArguments new frameId: aFrameId.
-	request := DAPScopesRequest withArguments: args.
-
-	clientDAP sendRequest: request
+	clientDAP scopes: args
 ]
 
 { #category : 'protocol' }
@@ -280,7 +295,7 @@ ClientDAPPresenter >> stackTrace [
 { #category : 'protocol' }
 ClientDAPPresenter >> stackTrace: aThreadId [
 
-	| args request |
+	| args |
 	args := DAPStackTraceArguments new
 		        threadId: aThreadId;
 		        startFrame: 0;
@@ -295,9 +310,7 @@ ClientDAPPresenter >> stackTrace: aThreadId [
 				        (#includeAll -> true) } asDictionary;
 		        yourself.
 
-	request := DAPStackTraceRequest withArguments: args.
-
-	clientDAP sendRequest: request
+	clientDAP stackTrace: args
 ]
 
 { #category : 'protocol' }
@@ -309,11 +322,9 @@ ClientDAPPresenter >> stepInDAP [
 { #category : 'protocol' }
 ClientDAPPresenter >> stepInDAP: aThreadId [
 
-	| args request |
+	| args |
 	args := DAPStepInArguments new threadId: aThreadId.
-	request := DAPStepInRequest withArguments: args.
-
-	clientDAP sendRequest: request
+	clientDAP stepIn: args
 ]
 
 { #category : 'protocol' }
@@ -325,22 +336,22 @@ ClientDAPPresenter >> stepOut [
 { #category : 'protocol' }
 ClientDAPPresenter >> stepOut: aThreadId [
 
-	| args request |
+	| args |
 	args := DAPStepOutArguments new threadId: aThreadId.
-	request := DAPStepOutRequest withArguments: args.
-
-	clientDAP sendRequest: request
+	clientDAP stepOut: args
 ]
 
 { #category : 'initialization' }
 ClientDAPPresenter >> uglyInitialzeForClient [
 
-	| host port scriptPath args message |
+	| host port scriptPath args cwdPath |
 	host := 'localhost'.
 	port := 5678.
-	scriptPath := '/Users/flavienvolant/Documents/sindarin-dap/script.py'.
+	scriptPath := '/Users/flavienvolant/Documents/sindarin-dap/py/script.py'.
+	cwdPath := '/Users/flavienvolant/Documents/sindarin-dap/py'.
 
 	clientDAP := DAPClient new.
+	
 	clientDAP connectTo: host port: port.
 
 	clientDAP startListening.
@@ -356,24 +367,23 @@ ClientDAPPresenter >> uglyInitialzeForClient [
 		        supportsInvalidatedEvent: true;
 		        supportsRunInTerminalRequest: true;
 		        supportsVariableType: true.
-	message := DAPInitializeRequest withArguments: args.
-	clientDAP sendRequest: message.
-
-	args := DAPDebugPyAttachRequestArguments host: 'localhost' port: port.
-
-	message := DAPAttachRequest withArguments: args.
-	clientDAP sendRequest: message.
+	clientDAP initialize: args.
 
 	args := DAPSetBreakpointsArguments new
 		        source: (DAPSource new path: scriptPath);
 		        breakpoints: (Array with: (DAPSourceBreakpoint new line: 5)).
 
-	message := DAPSetBreakpointsRequest withArguments: args.
+	clientDAP setBreakpoints: args.
+	clientDAP configurationDone.
 
-	clientDAP sendRequest: message.
+	args := {
+		        (#name -> 'Attach to Python').
+		        (#type -> 'python').
+		        (#connect -> {
+			         (#host -> host).
+			         (#port -> port) } asDictionary) } asDictionary.
 
-	message := DAPConfigurationDoneRequest new.
-	clientDAP sendRequest: message
+	clientDAP attach: args
 ]
 
 { #category : 'update' }
@@ -405,10 +415,8 @@ ClientDAPPresenter >> updateWithResponse: aDAPResponse [
 { #category : 'protocol' }
 ClientDAPPresenter >> variables: aVariablesReference [
 
-	| args request |
+	| args |
 	args := DAPVariablesArguments new variablesReference:
 		        aVariablesReference.
-	request := DAPVariablesRequest withArguments: args.
-
-	clientDAP sendRequest: request
+	clientDAP variables: args
 ]
