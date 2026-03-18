@@ -349,13 +349,14 @@ ClientDAPPresenter >> uglyInitialzeForClient [
 	cwdPath := '/Users/flavienvolant/Documents/sindarin-dap/py'.
 
 	clientDAP := DAPClient new.
-	
+
 	clientDAP connectTo: host port: port.
 
 	clientDAP startListening.
 
 	args := DAPInitializeRequestArguments new
 		        clientID: 'my-dap-client';
+		        clientName: 'Pharo dap client';
 		        adapterID: 'python';
 		        pathFormat: 'path';
 		        linesStartAt1: true;
@@ -364,22 +365,31 @@ ClientDAPPresenter >> uglyInitialzeForClient [
 		        supportsMemoryReferences: true;
 		        supportsInvalidatedEvent: true;
 		        supportsRunInTerminalRequest: true;
-		        supportsVariableType: true.
+		        supportsVariableType: true;
+		        supportsArgsCanBeInterpretedByShell: true;
+		        supportsMemoryEvent: true;
+		        supportsStartDebuggingRequest: true;
+		        locale: 'en'.
+
 	clientDAP initialize: args.
 
 	args := DAPSetBreakpointsArguments new
 		        source: (DAPSource new path: scriptPath);
-		        breakpoints: (Array with: (DAPSourceBreakpoint new line: 5)).
+		        breakpoints: (Array
+				         with: (DAPSourceBreakpoint new line: 1)
+				         with: (DAPSourceBreakpoint new line: 5)).
 
 	clientDAP setBreakpoints: args.
 	clientDAP configurationDone.
 
 	args := {
-		        (#name -> 'Attach to Python').
-		        (#type -> 'python').
-		        (#connect -> {
-			         (#host -> host).
-			         (#port -> port) } asDictionary) } asDictionary.
+		        ('name' -> 'Attach to Python').
+		        ('type' -> 'python').
+		        ('connect' -> {
+			         ('host' -> host).
+			         ('port' -> port) } asDictionary).
+		        ('redirectOutput' -> true).
+		        ('showReturnValue' -> true) } asDictionary.
 
 	clientDAP attach: args
 ]
