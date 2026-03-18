@@ -298,8 +298,6 @@ ClientDAPPresenter >> stackTrace: aThreadId [
 	| args |
 	args := DAPStackTraceArguments new
 		        threadId: aThreadId;
-		        startFrame: 0;
-		        levels: 1;
 		        format: {
 				        (#parameters -> true).
 				        (#parameterTypes -> true).
