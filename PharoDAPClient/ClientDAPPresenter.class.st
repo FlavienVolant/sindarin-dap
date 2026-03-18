@@ -160,6 +160,18 @@ ClientDAPPresenter >> displayResponse: responseAsDict [
 			 ifNotNil: [ STONJSON toStringPretty: request asDAPJSON ])
 ]
 
+{ #category : 'protocol' }
+ClientDAPPresenter >> evaluate: frameId [
+
+	| args |
+	args := DAPEvaluateArguments new
+		        context: 'repl';
+		        frameId: frameId;
+		        expression: '__pydevd_ret_val_dict["Foo.bar"]'.
+	
+	clientDAP evaluate: args 
+]
+
 { #category : 'initialization' }
 ClientDAPPresenter >> initialize [
 
@@ -179,6 +191,7 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Next' iconName: #right do: #next.
 	self addCommand: 'Step In' iconName: #into do: #stepInDAP.
 	self addCommand: 'Step Out' iconName: #over do: #stepOut.
+	self addCommand: 'Evaluate' iconName: #browse ask: 'Frame Id ?' do: #evaluate:.
 	self addCommand: 'Disconnect' iconName: #close do: #closeConnection
 ]
 

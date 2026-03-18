@@ -97,6 +97,15 @@ DAPClient >> dapHistory [
 	^ dapHistory
 ]
 
+{ #category : 'requests' }
+DAPClient >> evaluate: evaluateArguments [
+
+	| req |
+	state = #stopped ifFalse: [ ^ self ].
+	req := DAPEvaluateRequest withArguments: evaluateArguments.
+	self sendRequest: req
+]
+
 { #category : 'communication' }
 DAPClient >> handleEvent: eventAsDict [
 
@@ -146,7 +155,7 @@ DAPClient >> initialize: initializeArguments [
 	request := DAPInitializeRequest withArguments: initializeArguments.
 	self
 		sendRequest: request
-		onResponse: [ :resp | Transcript showCr: 'hello'. self state: #initializeResponse ].
+		onResponse: [ :resp | self state: #initializeResponse ].
 
 	eventHandlers at: 'initialized' put: [ :event |
 			self state: #initialized.
