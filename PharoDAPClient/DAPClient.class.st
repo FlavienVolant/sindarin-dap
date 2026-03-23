@@ -280,6 +280,15 @@ DAPClient >> setBreakpoints: setBreakPointsArguments [
 ]
 
 { #category : 'requests' }
+DAPClient >> setExpression: setExpressionArguments [
+
+	| request |
+	state = #stopped ifFalse: [ ^ self ].
+	request := DAPSetExpressionRequest withArguments: setExpressionArguments.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
 DAPClient >> setFunctionBreakpoints: setFunctionBreakpointsArguments [
 
 	| request |
