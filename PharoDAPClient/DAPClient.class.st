@@ -368,6 +368,14 @@ DAPClient >> stepOut: stepOutArguments [
 ]
 
 { #category : 'requests' }
+DAPClient >> threads [ 
+	
+	| request |
+	request := DAPThreadsRequest new.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
 DAPClient >> variables: variablesArguments [
 
 	| request |

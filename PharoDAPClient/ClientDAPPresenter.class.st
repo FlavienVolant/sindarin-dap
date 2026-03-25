@@ -183,7 +183,8 @@ ClientDAPPresenter >> initialize [
 ClientDAPPresenter >> initializeCommandBar [
 	
 	commandBarPresenter := self newToolbar.
-
+	
+	self addCommand: 'Threads' iconName: #trait do: #threads. 
 	self addCommand: 'Stack Trace' iconName: #browse do: #stackTrace.
 	self addCommand: 'Scopes' iconName: #folder ask: 'Frame Id ?' do: #scopes:.
 	self addCommand: 'Variables' iconName: #table ask: 'Variables Reference ?' do: #variables:.
@@ -192,6 +193,7 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Step In' iconName: #into do: #stepInDAP.
 	self addCommand: 'Step Out' iconName: #over do: #stepOut.
 	self addCommand: 'Evaluate' iconName: #browse ask: 'Frame Id ?' do: #evaluate:.
+	self addCommand: 'Set Expression' iconName: #edit  ask: 'Frame Id ?' do: #setExpression:. 
 	self addCommand: 'Disconnect' iconName: #close do: #closeConnection
 ]
 
@@ -300,6 +302,18 @@ ClientDAPPresenter >> scopes: aFrameId [
 ]
 
 { #category : 'protocol' }
+ClientDAPPresenter >> setExpression: aFramedId [
+
+	| args |
+	args := DAPSetExpressionArguments new
+		        expression: 'Bar.toto';
+		        value: 'lambda self: bar.toto()';
+		        frameId: aFramedId.
+
+	clientDAP setExpression: args
+]
+
+{ #category : 'protocol' }
 ClientDAPPresenter >> stackTrace [
 
 	self stackTrace: 1
@@ -350,6 +364,12 @@ ClientDAPPresenter >> stepOut: aThreadId [
 	| args |
 	args := DAPStepOutArguments new threadId: aThreadId.
 	clientDAP stepOut: args
+]
+
+{ #category : 'protocol' }
+ClientDAPPresenter >> threads [
+
+	clientDAP threads
 ]
 
 { #category : 'initialization' }
