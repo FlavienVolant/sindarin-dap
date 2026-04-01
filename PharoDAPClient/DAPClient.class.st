@@ -33,13 +33,12 @@ DAPClient >> attach: attachArguments onResponse: aBlock [
 { #category : 'connection open/close' }
 DAPClient >> closeConnection [
 
-	self flag: 'Send DisconnectRequest'.
-
 	listenerProcess ifNotNil: [
 			listenerProcess terminate.
 			listenerProcess := nil ].
 
 	socket ifNotNil: [
+			self disconnect.
 			socket close.
 			socket := nil ].
 
@@ -83,6 +82,18 @@ DAPClient >> continue: continueArguments onResponse: aBlock [
 DAPClient >> dapHistory [
 
 	^ dapHistory
+]
+
+{ #category : 'requests' }
+DAPClient >> disconnect [
+	
+	self disconnectOnResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> disconnectOnResponse: aBlock [
+	
+	self sendRequest: (DAPDisconnectRequest new) onResponse: aBlock 
 ]
 
 { #category : 'requests' }
