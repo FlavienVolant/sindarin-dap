@@ -22,7 +22,6 @@ DAPClientForJS >> attachArguments [
 DAPClientForJS >> handleStartDebuggingRequest: aStartDebuggingRequest [
 
 	| childClient |
-	self halt.
 
 	childClient := DAPClientForJSStartDebug new attachOtherArguments:
 		               (aStartDebuggingRequest
@@ -44,36 +43,12 @@ DAPClientForJS >> initialize [
 ]
 
 { #category : 'initialization' }
-DAPClientForJS >> initializeArguments [
-
-	^ DAPInitializeRequestArguments new
-		  clientID: 'my-dap-client';
-		  clientName: 'Pharo dap client';
-		  adapterID: 'node';
-		  pathFormat: 'path';
-		  linesStartAt1: true;
-		  columnsStartAt1: true;
-		  supportsProgressReporting: true;
-		  supportsMemoryReferences: true;
-		  supportsInvalidatedEvent: true;
-		  supportsRunInTerminalRequest: true;
-		  supportsVariableType: true;
-		  supportsArgsCanBeInterpretedByShell: true;
-		  supportsMemoryEvent: true;
-		  locale: 'en'
-]
-
-{ #category : 'initialization' }
 DAPClientForJS >> startSession [
-
-	| host port scriptPath |
-	host := 'localhost'.
-	port := 5678.
-	scriptPath := '/Users/flavienvolant/Documents/sindarin-dap/js/script.js'.
-
-	self connectTo: host port: port.
-	self startListening.
-	self initialize: self initializeArguments.
-	self configurationDone.
-	self attach: self attachArguments
+	
+	DAPClientBuilder new
+		client: self;
+		adapterID: 'node';
+		port: 5678;
+		attachArguments: self attachArguments;
+		startClientSession 
 ]
