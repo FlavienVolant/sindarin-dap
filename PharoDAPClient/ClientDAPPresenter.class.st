@@ -15,6 +15,12 @@ Class {
 	#tag : 'Presenters'
 }
 
+{ #category : 'instance creation' }
+ClientDAPPresenter class >> newWithClient: aDAPClient [
+	
+	^ self new clientDAP: aDAPClient 
+]
+
 { #category : 'helpers' }
 ClientDAPPresenter >> addCommand: label iconName: iconName ask: question do: selector [
 
@@ -51,6 +57,14 @@ ClientDAPPresenter >> askInteger: aLabel do: aBlock [
 		         do: [ ^ self ].
 
 	value ifNotNil: [ aBlock value: value ]
+]
+
+{ #category : 'accessing' }
+ClientDAPPresenter >> clientDAP: aDAPClient [
+	
+	clientDAP := aDAPClient.
+	clientDAP dapHistory addObserver: self.
+	self updateMessageList
 ]
 
 { #category : 'protocol' }
@@ -168,13 +182,6 @@ ClientDAPPresenter >> evaluate: frameId [
 ]
 
 { #category : 'initialization' }
-ClientDAPPresenter >> initialize [
-
-	self uglyInitialzeForClient.
-	super initialize
-]
-
-{ #category : 'initialization' }
 ClientDAPPresenter >> initializeCommandBar [
 	
 	commandBarPresenter := self newToolbar.
@@ -221,13 +228,7 @@ ClientDAPPresenter >> initializePresenters [
 	self initializeCommandBar.
 	self initializeMessageList.
 	self initializeRequest.
-	self initializeResponse.
-	self initializeState.
-	
-	clientDAP stateChangedCallBack: [ :state | self onStateChanged: state ].
-	clientDAP dapHistory addObserver: self.
-
-	self updateMessageList
+	self initializeResponse
 ]
 
 { #category : 'initialization' }
@@ -352,61 +353,6 @@ ClientDAPPresenter >> stepOut: aThreadId [
 ClientDAPPresenter >> threads [
 
 	clientDAP threads
-]
-
-{ #category : 'initialization' }
-ClientDAPPresenter >> uglyInitialzeForClient [
-
-	| host port scriptPath args cwdPath |
-	host := 'localhost'.
-	port := 5678.
-	scriptPath := '/Users/flavienvolant/Documents/sindarin-dap/py/script.py'.
-	cwdPath := '/Users/flavienvolant/Documents/sindarin-dap/py'.
-
-	clientDAP := DAPClient new.
-
-	clientDAP connectTo: host port: port.
-
-	clientDAP startListening.
-
-	args := DAPInitializeRequestArguments new
-		        clientID: 'my-dap-client';
-		        clientName: 'Pharo dap client';
-		        adapterID: 'python';
-		        pathFormat: 'path';
-		        linesStartAt1: true;
-		        columnsStartAt1: true;
-		        supportsProgressReporting: true;
-		        supportsMemoryReferences: true;
-		        supportsInvalidatedEvent: true;
-		        supportsRunInTerminalRequest: true;
-		        supportsVariableType: true;
-		        supportsArgsCanBeInterpretedByShell: true;
-		        supportsMemoryEvent: true;
-		        supportsStartDebuggingRequest: true;
-		        locale: 'en'.
-
-	clientDAP initialize: args.
-
-	args := DAPSetBreakpointsArguments new
-		        source: (DAPSource new path: scriptPath);
-		        breakpoints: (Array
-				         with: (DAPSourceBreakpoint new line: 1)
-				         with: (DAPSourceBreakpoint new line: 5)).
-
-	clientDAP setBreakpoints: args.
-	clientDAP configurationDone.
-
-	args := {
-		        ('name' -> 'Attach to Python').
-		        ('type' -> 'python').
-		        ('connect' -> {
-			         ('host' -> host).
-			         ('port' -> port) } asDictionary).
-		        ('redirectOutput' -> true).
-		        ('showReturnValue' -> true) } asDictionary.
-
-	clientDAP attach: args
 ]
 
 { #category : 'update' }
