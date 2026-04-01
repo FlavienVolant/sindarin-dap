@@ -22,33 +22,19 @@ DAPClientForPY >> attachArguments [
 { #category : 'initialization' }
 DAPClientForPY >> initialize [
 
-	| host port scriptPath args|
 	super initialize.
 
-	host := 'localhost'.
-	port := 5678.
-	scriptPath := '/Users/flavienvolant/Documents/sindarin-dap/py/script.py'.
-
-	self connectTo: host port: port.
-	self startListening.
-	self initialize: self initializeArguments.
-	
-	args := DAPSetBreakpointsArguments new
-		        source: (DAPSource new path: scriptPath);
-		        breakpoints: (Array with: (DAPSourceBreakpoint new line: 1)).
-
-	self setBreakpoints: args.
-
-	args := DAPSetFunctionBreakpointsArguments new breakpoints: {
-			        (DAPFunctionBreakpoint new
-				         name: 'bar';
-				         condition: 'isinstance(self, Foo)').
-			        (DAPFunctionBreakpoint new name: 'toto') }.
-
-	self setFunctionBreakpoints: args.
-	
-	self configurationDone.
-	self attach: self attachArguments
+	DAPClientBuilder new
+		client: self;
+		port: 5678;
+		adapterID: 'python';
+		attachArguments: self attachArguments;
+		breakpoint:
+			'/Users/flavienvolant/Documents/sindarin-dap/py/script.py'
+		line: 1;
+		functionBreakpoint: 'bar' condition: 'isinstance(self, Foo)';
+		functionBreakpoint: 'toto';
+		startClientSession
 ]
 
 { #category : 'initialization' }
