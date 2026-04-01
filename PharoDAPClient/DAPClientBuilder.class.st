@@ -42,6 +42,12 @@ DAPClientBuilder >> breakpoint: scriptPath line: anNumber [
 		(DAPSourceBreakpoint new line: anNumber)
 ]
 
+{ #category : 'accessing' }
+DAPClientBuilder >> client: aDAPClient [
+
+	client := aDAPClient
+]
+
 { #category : 'private' }
 DAPClientBuilder >> configurationDone [
 
@@ -69,6 +75,14 @@ DAPClientBuilder >> functionBreakpoint: functionName [
 
 	functionBreakpoints add:
 		(DAPFunctionBreakpoint new name: functionName)
+]
+
+{ #category : 'accessing' }
+DAPClientBuilder >> functionBreakpoint: functionName condition: aString [
+
+	functionBreakpoints add: (DAPFunctionBreakpoint new
+			 name: functionName;
+			 condition: aString)
 ]
 
 { #category : 'accessing' }
