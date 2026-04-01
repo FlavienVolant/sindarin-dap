@@ -135,6 +135,43 @@ DAPClient >> handleEvent: eventAsDict [
 ]
 
 { #category : 'communication' }
+DAPClient >> handleRequest: requestAsDict [
+
+	| request_seq request_command callback |
+	dapHistory addRequest: requestAsDict.
+	request_seq := requestAsDict at: 'seq'.
+	request_command := requestAsDict at: 'command'.
+
+	(requestHandlers includesKey: request_command) ifFalse: [
+			| json bytes header |
+			json := {
+				        ('seq' -> self newSeq).
+				        ('type' -> 'response').
+				        ('request_seq' -> request_seq).
+				        ('command' -> request_command).
+				        ('success' -> false).
+				        ('message' -> (request_command , ' is not supported')) }
+				        asDictionary.
+
+			bytes := (STONJSON toString: json) utf8Encoded.
+
+			header := 'Content-Length: ' , bytes size printString , String crlf
+			          , String crlf.
+
+			Transcript showCr: (STONJSON toStringPretty: json).
+
+			socket nextPutAll: header asByteArray.
+			socket nextPutAll: bytes.
+			socket flush.
+			dapHistory addResponse: json.
+			^ self ].
+
+	callback := requestHandlers at: request_command.
+	requestHandlers removeKey: request_command.
+	callback value: requestAsDict
+]
+
+{ #category : 'communication' }
 DAPClient >> handleResponse: responseAsDict [
 
 	| request_seq callback |
@@ -155,6 +192,7 @@ DAPClient >> initialize [
 	buffer := ByteArray new.
 	responseHandlers := Dictionary new.
 	eventHandlers := Dictionary new.
+	requestHandlers := Dictionary new.
 	dapHistory := DAPHistory new.
 	pendingRequests := OrderedCollection new.
 	self state: #disconnected
@@ -200,6 +238,15 @@ DAPClient >> launch: launchArguments [
 				at: 'terminated' put: [ :event | self state: #terminated ].
 			self state: #running ].
 	self state: #launching
+]
+
+{ #category : 'accessing' }
+DAPClient >> newSeq [
+
+	| requestSeq |
+	requestSeq := seq.
+	seq := seq + 1.
+	^ requestSeq
 ]
 
 { #category : 'requests' }
@@ -264,8 +311,7 @@ DAPClient >> sendRequest: aDAPRequest [
 DAPClient >> sendRequest: aDAPRequest onResponse: callBackBlock [
 
 	| json bytes header requestSeq |
-	requestSeq := seq.
-	seq := seq + 1.
+	requestSeq := self newSeq.
 
 	aDAPRequest seq: requestSeq.
 	dapHistory addRequest: aDAPRequest asDAPJSON.
@@ -338,6 +384,7 @@ DAPClient >> startListening [
 			
 			(json at: #type) = 'event' ifTrue: [ self handleEvent: json ].
 			(json at: #type) = 'response' ifTrue: [ self handleResponse: json ].
+			(json at: #type) = 'request' ifTrue: [ self handleRequest: json ].
 
 		] repeat 
 	] fork
