@@ -70,7 +70,6 @@ ClientDAPPresenter >> clientDAP: aDAPClient [
 { #category : 'protocol' }
 ClientDAPPresenter >> closeConnection [
 
-	clientDAP stateChangedCallBack: [ :state |  ].
 	clientDAP closeConnection
 ]
 

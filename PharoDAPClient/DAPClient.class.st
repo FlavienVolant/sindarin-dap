@@ -9,10 +9,7 @@ Class {
 		'eventHandlers',
 		'responseHandlers',
 		'requestHandlers',
-		'dapHistory',
-		'state',
-		'pendingRequests',
-		'stateChangedCallBack'
+		'dapHistory'
 	],
 	#category : 'PharoDAPClient-Model',
 	#package : 'PharoDAPClient',
@@ -22,27 +19,21 @@ Class {
 { #category : 'requests' }
 DAPClient >> attach: attachArguments [
 
-	| request |
-	
-	(self
-		 verifyStateForRequest: #attach:
-		 arguments: attachArguments
-		 requiredState: #initializeResponse) ifFalse: [ ^ self ].
-	
-	request := DAPAttachRequest withArguments: attachArguments.
+	self attach: attachArguments onResponse: [ :resp | ]
+]
 
-	self sendRequest: request onResponse: [ :rest |
-			eventHandlers
-				at: 'stopped' put: [ :event | self state: #stopped ];
-				at: 'continued' put: [ :event | self state: #running ];
-				at: 'exited' put: [ :event | self state: #disconnected ];
-				at: 'terminated' put: [ :event | self state: #terminated ].
-			self state: #running ].
-	self state: #launching
+{ #category : 'requests' }
+DAPClient >> attach: attachArguments onResponse: aBlock [
+
+	| request |
+	request := DAPAttachRequest withArguments: attachArguments.
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'connection open/close' }
 DAPClient >> closeConnection [
+
+	self flag: 'Send DisconnectRequest'.
 
 	listenerProcess ifNotNil: [
 			listenerProcess terminate.
@@ -54,22 +45,15 @@ DAPClient >> closeConnection [
 
 	eventHandlers keysAndValuesRemove: [ :key :value | true ].
 	responseHandlers keysAndValuesRemove: [ :key :value | true ].
-	self state: #disconnected
+	requestHandlers keysAndValuesRemove: [ :key :value | true ]
 ]
 
 { #category : 'requests' }
 DAPClient >> configurationDone [
 
 	| request |
-	(self
-		 verifyStateForRequest: #configurationDone
-		 arguments: nil
-		 requiredState: #initialized) ifFalse: [ ^ self ].
-
 	request := DAPConfigurationDoneRequest new.
-	self
-		sendRequest: request
-		onResponse: [ :resp | self state: #configured ]
+	self sendRequest: request
 ]
 
 { #category : 'connection open/close' }
@@ -78,18 +62,21 @@ DAPClient >> connectTo: aHostName port: aPort [
 	socket := SocketStream
 		          openConnectionToHostNamed: aHostName
 		          port: aPort.
-	socket noTimeout.
-	state := #connecting
+	socket noTimeout
 ]
 
 { #category : 'requests' }
 DAPClient >> continue: continueArguments [
 
-	| request |
-	state = #stopped ifFalse: [ ^ self ].
+	self continue: continueArguments onResponse: [ :resp |  ]
+]
 
+{ #category : 'requests' }
+DAPClient >> continue: continueArguments onResponse: aBlock [
+
+	| request |
 	request := DAPContinueRequest withArguments: continueArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'accessing' }
@@ -101,32 +88,50 @@ DAPClient >> dapHistory [
 { #category : 'requests' }
 DAPClient >> evaluate: evaluateArguments [
 
+	self evaluate: evaluateArguments onResponse: [ :resp |  ]
+]
+
+{ #category : 'requests' }
+DAPClient >> evaluate: evaluateArguments onResponse: aBlock [
+
 	| req |
-	state = #stopped ifFalse: [ ^ self ].
 	req := DAPEvaluateRequest withArguments: evaluateArguments.
-	self sendRequest: req
+	self sendRequest: req onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> goto: gotoArguments [
 
+	self goto: gotoArguments onResponse: [ :resp |  ]
+]
+
+{ #category : 'requests' }
+DAPClient >> goto: gotoArguments onResponse: aBlock [
+
 	| req |
 	req := DAPGotoRequest withArguments: gotoArguments.
-	self sendRequest: req
+	self sendRequest: req onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> gotoTarget: gotoTargetArguments [
 
+	self gotoTarget: gotoTargetArguments onResponse: [ :resp |  ]
+]
+
+{ #category : 'requests' }
+DAPClient >> gotoTarget: gotoTargetArguments onResponse: aBlock [
+
 	| req |
 	req := DAPGotoTargetsRequest withArguments: gotoTargetArguments.
-	self sendRequest: req
+	self sendRequest: req onResponse: aBlock 
 ]
 
 { #category : 'communication' }
 DAPClient >> handleEvent: eventAsDict [
 
 	| eventType handler |
+	Transcript showCr: eventAsDict.
 	dapHistory addEvent: eventAsDict.
 
 	eventType := eventAsDict at: 'event'.
@@ -138,6 +143,8 @@ DAPClient >> handleEvent: eventAsDict [
 DAPClient >> handleRequest: requestAsDict [
 
 	| request_seq request_command callback |
+	self flag: 'ugly'.
+
 	dapHistory addRequest: requestAsDict.
 	request_seq := requestAsDict at: 'seq'.
 	request_command := requestAsDict at: 'command'.
@@ -193,51 +200,37 @@ DAPClient >> initialize [
 	responseHandlers := Dictionary new.
 	eventHandlers := Dictionary new.
 	requestHandlers := Dictionary new.
-	dapHistory := DAPHistory new.
-	pendingRequests := OrderedCollection new.
-	self state: #disconnected
+	dapHistory := DAPHistory new
 ]
 
 { #category : 'requests' }
 DAPClient >> initialize: initializeArguments [
 
+	self initialize: initializeArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> initialize: initializeArguments onResponse: aBlock [
+
+	"aBlock take the response as argument"
+
 	| request |
-	(self
-		 verifyStateForRequest: #initialize:
-		 arguments: initializeArguments
-		 requiredState: #connecting) ifFalse: [ ^ self ].
-
 	request := DAPInitializeRequest withArguments: initializeArguments.
-	self
-		sendRequest: request
-		onResponse: [ :resp | self state: #initializeResponse ].
-
-	eventHandlers at: 'initialized' put: [ :event |
-			self state: #initialized.
-			eventHandlers removeKey: 'initialized' ifAbsent: [ ^ self ] ].
-	self state: #initializing
+	self sendRequest: request onResponse: aBlock.
 ]
 
 { #category : 'requests' }
 DAPClient >> launch: launchArguments [
 
-	| request |
-	
-	(self
-		 verifyStateForRequest: #launch:
-		 arguments: launchArguments
-		 requiredState: #initializeResponse) ifFalse: [ ^ self ].
-	
-	request := DAPLaunchRequest withArguments: launchArguments.
+	self launch: launchArguments onResponse: [ :resp | ]
+]
 
-	self sendRequest: request onResponse: [ :rest |
-			eventHandlers
-				at: 'stopped' put: [ :event | self state: #stopped ];
-				at: 'continued' put: [ :event | self state: #running ];
-				at: 'exited' put: [ :event | self state: #disconnected ];
-				at: 'terminated' put: [ :event | self state: #terminated ].
-			self state: #running ].
-	self state: #launching
+{ #category : 'requests' }
+DAPClient >> launch: launchArguments onResponse: aBlock [
+
+	| request |
+	request := DAPLaunchRequest withArguments: launchArguments.
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'accessing' }
@@ -252,13 +245,18 @@ DAPClient >> newSeq [
 { #category : 'requests' }
 DAPClient >> next: nextArguments [
 
-	| request |
-	state = #stopped ifFalse: [ ^ self ].
-	request := DAPNextRequest withArguments: nextArguments.
-	self sendRequest: request
+	self next: nextArguments onResponse: [ :resp | ]
 ]
 
-{ #category : 'initialization' }
+{ #category : 'requests' }
+DAPClient >> next: nextArguments onResponse: aBlock [
+
+	| request |
+	request := DAPNextRequest withArguments: nextArguments.
+	self sendRequest: request onResponse: aBlock 
+]
+
+{ #category : 'communication' }
 DAPClient >> onEvent: eventName do: block [
 	eventHandlers at: eventName put: block 
 ]
@@ -295,10 +293,15 @@ DAPClient >> readMessageAsDict [
 { #category : 'requests' }
 DAPClient >> scopes: scopesArguments [
 
+	self scopes: scopesArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> scopes: scopesArguments onResponse: aBlock [
+
 	| request |
-	state = #stopped ifFalse: [ ^ self ].
 	request := DAPScopesRequest withArguments: scopesArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'communication' }
@@ -331,47 +334,60 @@ DAPClient >> sendRequest: aDAPRequest onResponse: callBackBlock [
 { #category : 'requests' }
 DAPClient >> setBreakpoints: setBreakPointsArguments [
 
-	| request |
-	(self
-		 verifyStateForRequest: #setBreakpoints:
-		 arguments: setBreakPointsArguments
-		 requiredState: #initialized) ifFalse: [ ^ self ].
+	self setBreakpoints: setBreakPointsArguments onResponse: [ :resp | ]
+]
 
+{ #category : 'requests' }
+DAPClient >> setBreakpoints: setBreakPointsArguments onResponse: aBlock [
+
+	| request |
 	request := DAPSetBreakpointsRequest withArguments:
 		           setBreakPointsArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> setExpression: setExpressionArguments [
 
+	self setExpression: setExpressionArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> setExpression: setExpressionArguments onResponse: aBlock [
+
 	| request |
-	state = #stopped ifFalse: [ ^ self ].
-	request := DAPSetExpressionRequest withArguments: setExpressionArguments.
-	self sendRequest: request
+	request := DAPSetExpressionRequest withArguments:
+		           setExpressionArguments.
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> setFunctionBreakpoints: setFunctionBreakpointsArguments [
 
-	| request |
-	(self
-		 verifyStateForRequest: #setFunctionBreakpoints:
-		 arguments: setFunctionBreakpointsArguments
-		 requiredState: #initialized) ifFalse: [ ^ self ].
+	self setFunctionBreakpoints: setFunctionBreakpointsArguments onResponse: [ :resp | ]
+]
 
+{ #category : 'requests' }
+DAPClient >> setFunctionBreakpoints: setFunctionBreakpointsArguments onResponse: aBlock [
+
+	| request |
 	request := DAPSetFunctionBreakpointsRequest withArguments:
 		           setFunctionBreakpointsArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> stackTrace: stackTraceArguments [
 
+	self stackTrace: stackTraceArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> stackTrace: stackTraceArguments onResponse: aBlock [
+
 	| request |
-	state = #stopped ifFalse: [ ^ self ].
 	request := DAPStackTraceRequest withArguments: stackTraceArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'communication' }
@@ -390,81 +406,75 @@ DAPClient >> startListening [
 	] fork
 ]
 
-{ #category : 'accessing' }
-DAPClient >> state [
-
-	^ state
-]
-
-{ #category : 'states' }
-DAPClient >> state: aState [
-
-	state := aState.
-
-	pendingRequests do: [ :req |
-		(req canExecute: state) ifTrue: [ req execute: self ] ].
-
-	stateChangedCallBack ifNotNil: [ stateChangedCallBack value: aState ]
-]
-
-{ #category : 'accessing' }
-DAPClient >> stateChangedCallBack: aBlock [
-
-	stateChangedCallBack := aBlock 
-]
-
 { #category : 'requests' }
 DAPClient >> stepIn: stepInArguments [
 
+	self stepIn: stepInArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> stepIn: stepInArguments onResponse: aBlock [
+
 	| request |
-	state = #stopped ifFalse: [ ^ self ].
 	request := DAPStepInRequest withArguments: stepInArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> stepInTargets: stepInTargetsArguments [
 
+	self stepInTargets: stepInTargetsArguments onResponse: [ :resp |  ]
+]
+
+{ #category : 'requests' }
+DAPClient >> stepInTargets: stepInTargetsArguments onResponse: aBlock [
+
 	| request |
 	request := DAPStepInTargetsRequest withArguments:
 		           stepInTargetsArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> stepOut: stepOutArguments [
 
+	self stepOut: stepOutArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> stepOut: stepOutArguments onResponse: aBlock [
+
 	| request |
-	state = #stopped ifFalse: [ ^ self ].
 	request := DAPStepOutRequest withArguments: stepOutArguments.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock
 ]
 
 { #category : 'requests' }
 DAPClient >> threads [ 
 	
+	self threadsOnResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> threadsOnResponse: aBlock [
+	
 	| request |
 	request := DAPThreadsRequest new.
-	self sendRequest: request
+	self sendRequest: request onResponse: aBlock 
 ]
 
 { #category : 'requests' }
 DAPClient >> variables: variablesArguments [
 
 	| request |
-	state = #stopped ifFalse: [ ^ self ].
 	request := DAPVariablesRequest withArguments: variablesArguments.
 	self sendRequest: request
 ]
 
-{ #category : 'states' }
-DAPClient >> verifyStateForRequest: requestSymbole arguments: args requiredState: requiredState [
+{ #category : 'requests' }
+DAPClient >> variables: variablesArguments onResponse: aBlock [
 
-	state = requiredState ifFalse: [
-			pendingRequests add: (PendingRequest
-					 request: requestSymbole
-					 arguments: args
-					 requiredState: requiredState).
-			^ false ].
-	^ true
+	| request |
+	request := DAPVariablesRequest withArguments: variablesArguments.
+	self sendRequest: request onResponse: aBlock 
 ]

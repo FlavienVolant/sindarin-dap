@@ -1,9 +1,9 @@
 Class {
 	#name : 'DAPClientForPY',
 	#superclass : 'DAPClient',
-	#category : 'PharoDAPClient-examples',
+	#category : 'PharoDAPClient-Examples',
 	#package : 'PharoDAPClient',
-	#tag : 'examples'
+	#tag : 'Examples'
 }
 
 { #category : 'initialization' }
