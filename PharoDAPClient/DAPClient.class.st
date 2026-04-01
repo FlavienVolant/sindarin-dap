@@ -8,6 +8,7 @@ Class {
 		'listenerProcess',
 		'eventHandlers',
 		'responseHandlers',
+		'requestHandlers',
 		'dapHistory',
 		'state',
 		'pendingRequests',
@@ -103,6 +104,22 @@ DAPClient >> evaluate: evaluateArguments [
 	| req |
 	state = #stopped ifFalse: [ ^ self ].
 	req := DAPEvaluateRequest withArguments: evaluateArguments.
+	self sendRequest: req
+]
+
+{ #category : 'requests' }
+DAPClient >> goto: gotoArguments [
+
+	| req |
+	req := DAPGotoRequest withArguments: gotoArguments.
+	self sendRequest: req
+]
+
+{ #category : 'requests' }
+DAPClient >> gotoTarget: gotoTargetArguments [
+
+	| req |
+	req := DAPGotoTargetsRequest withArguments: gotoTargetArguments.
 	self sendRequest: req
 ]
 
@@ -355,6 +372,15 @@ DAPClient >> stepIn: stepInArguments [
 	| request |
 	state = #stopped ifFalse: [ ^ self ].
 	request := DAPStepInRequest withArguments: stepInArguments.
+	self sendRequest: request
+]
+
+{ #category : 'requests' }
+DAPClient >> stepInTargets: stepInTargetsArguments [
+
+	| request |
+	request := DAPStepInTargetsRequest withArguments:
+		           stepInTargetsArguments.
 	self sendRequest: request
 ]
 

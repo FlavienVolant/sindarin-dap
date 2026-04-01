@@ -181,6 +181,26 @@ ClientDAPPresenter >> evaluate: frameId [
 	clientDAP evaluate: args 
 ]
 
+{ #category : 'protocol' }
+ClientDAPPresenter >> goto: targetId [
+	
+	| args |
+	args := DAPGotoArguments new
+		targetId: targetId;
+		threadId: 1.
+	clientDAP goto: args
+]
+
+{ #category : 'protocol' }
+ClientDAPPresenter >> gotoTarget: line [
+	
+	| args |
+	args := DAPGotoTargetsArguments new
+		source: (DAPSource new path: '/Users/flavienvolant/Documents/sindarin-dap/py/script.py');
+		line: line.
+	clientDAP gotoTarget: args
+]
+
 { #category : 'initialization' }
 ClientDAPPresenter >> initializeCommandBar [
 	
@@ -196,6 +216,9 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Step Out' iconName: #over do: #stepOut.
 	self addCommand: 'Evaluate' iconName: #browse ask: 'Frame Id ?' do: #evaluate:.
 	self addCommand: 'Set Expression' iconName: #edit  ask: 'Frame Id ?' do: #setExpression:. 
+	self addCommand: 'Goto Target' iconName: #hierarchy ask: 'Line ?' do: #gotoTarget:.
+	self addCommand: 'Goto' iconName: #references ask: 'Goto Target Id ?' do: #goto:. 
+	self addCommand: 'Step In Targets' iconName: #branch ask: 'Frame Id ?'  do: #stepInTargets:.
 	self addCommand: 'Disconnect' iconName: #close do: #closeConnection
 ]
 
@@ -333,6 +356,14 @@ ClientDAPPresenter >> stepInDAP: aThreadId [
 	| args |
 	args := DAPStepInArguments new threadId: aThreadId.
 	clientDAP stepIn: args
+]
+
+{ #category : 'protocol' }
+ClientDAPPresenter >> stepInTargets: frameId [
+
+	| args |
+	args := DAPStepInTargetsArguments new frameId: frameId.
+	clientDAP stepInTargets: args
 ]
 
 { #category : 'protocol' }
