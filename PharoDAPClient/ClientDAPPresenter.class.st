@@ -8,8 +8,7 @@ Class {
 		'requestPresenter',
 		'responsePresenter',
 		'clientDAP',
-		'messageListPresenter',
-		'statePresenter'
+		'messageListPresenter'
 	],
 	#category : 'PharoDAPClient-Presenters',
 	#package : 'PharoDAPClient',
@@ -94,11 +93,7 @@ ClientDAPPresenter >> continue: aThreadId [
 ClientDAPPresenter >> defaultLayout [
 
 	^ SpBoxLayout newTopToBottom
-		  add: (SpBoxLayout newLeftToRight
-				   add: #commandBarPresenter;
-				   add: #statePresenter width: 100;
-				   yourself)
-		  height: 40;
+		  add: #commandBarPresenter height: 40;
 		  add: (SpPanedLayout newLeftToRight
 				   add: #messageListPresenter;
 				   add: (SpPanedLayout newTopToBottom
@@ -250,13 +245,6 @@ ClientDAPPresenter >> initializeResponse [
 ]
 
 { #category : 'initialization' }
-ClientDAPPresenter >> initializeState [
-
-	statePresenter := self newLabel.
-	statePresenter label: clientDAP state asString
-]
-
-{ #category : 'initialization' }
 ClientDAPPresenter >> initializeWindow: aWindowPresenter [
 	
 	super initializeWindow: aWindowPresenter.
@@ -277,12 +265,6 @@ ClientDAPPresenter >> next: aThreadId [
 	| args |
 	args := DAPNextArguments new threadId: aThreadId.
 	clientDAP next: args
-]
-
-{ #category : 'event handling' }
-ClientDAPPresenter >> onStateChanged: aState [
-	
-	statePresenter label: aState 
 ]
 
 { #category : 'initialization' }
