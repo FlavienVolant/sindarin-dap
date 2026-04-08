@@ -60,6 +60,12 @@ ClientDAPPresenter >> askInteger: aLabel do: aBlock [
 ]
 
 { #category : 'accessing' }
+ClientDAPPresenter >> clientDAP [
+
+	^ clientDAP
+]
+
+{ #category : 'accessing' }
 ClientDAPPresenter >> clientDAP: aDAPClient [
 	
 	clientDAP := aDAPClient.
@@ -327,6 +333,12 @@ ClientDAPPresenter >> stackTrace [
 { #category : 'protocol' }
 ClientDAPPresenter >> stackTrace: aThreadId [
 
+	self stackTrace: aThreadId onResponse: [ :resp |  ]
+]
+
+{ #category : 'protocol' }
+ClientDAPPresenter >> stackTrace: aThreadId onResponse: aBlock [
+
 	| args |
 	args := DAPStackTraceArguments new
 		        threadId: aThreadId;
@@ -340,7 +352,7 @@ ClientDAPPresenter >> stackTrace: aThreadId [
 				        (#includeAll -> true) } asDictionary;
 		        yourself.
 
-	clientDAP stackTrace: args
+	clientDAP stackTrace: args onResponse: aBlock
 ]
 
 { #category : 'protocol' }
