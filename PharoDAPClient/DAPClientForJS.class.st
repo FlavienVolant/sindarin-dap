@@ -1,6 +1,9 @@
 Class {
 	#name : 'DAPClientForJS',
-	#superclass : 'DAPClient',
+	#superclass : 'SindarinDAPClient',
+	#instVars : [
+		'child'
+	],
 	#category : 'PharoDAPClient-Examples',
 	#package : 'PharoDAPClient',
 	#tag : 'Examples'
@@ -18,18 +21,22 @@ DAPClientForJS >> attachArguments [
 		  ('continueOnAttach' -> true) } asDictionary
 ]
 
+{ #category : 'accessing' }
+DAPClientForJS >> child [
+
+	^ child
+]
+
 { #category : 'handle request' }
 DAPClientForJS >> handleStartDebuggingRequest: aStartDebuggingRequest [
 
-	| childClient |
-
-	childClient := DAPClientForJSStartDebug new attachOtherArguments:
+	child := DAPClientForJSStartDebug new attachOtherArguments:
 		               (aStartDebuggingRequest
 			                at: 'arguments'
 			                at: 'configuration').
-	childClient startSession.
+	child startSession.
 
-	(ClientDAPPresenter newWithClient: childClient) open
+	(ClientDAPPresenter newWithClient: child) open
 ]
 
 { #category : 'initialization' }
