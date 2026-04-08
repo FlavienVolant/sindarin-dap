@@ -1,6 +1,6 @@
 Class {
 	#name : 'DAPClientForPY',
-	#superclass : 'DAPClient',
+	#superclass : 'SindarinDAPClient',
 	#category : 'PharoDAPClient-Examples',
 	#package : 'PharoDAPClient',
 	#tag : 'Examples'
@@ -35,25 +35,4 @@ DAPClientForPY >> initialize [
 		functionBreakpoint: 'bar' condition: 'isinstance(self, Foo)';
 		functionBreakpoint: 'toto';
 		startClientSession
-]
-
-{ #category : 'initialization' }
-DAPClientForPY >> initializeArguments [
-
-	^ DAPInitializeRequestArguments new
-		        clientID: 'my-dap-client';
-		        clientName: 'Pharo dap client';
-		        adapterID: 'python';
-		        pathFormat: 'path';
-		        linesStartAt1: true;
-		        columnsStartAt1: true;
-		        supportsProgressReporting: true;
-		        supportsMemoryReferences: true;
-		        supportsInvalidatedEvent: true;
-		        supportsRunInTerminalRequest: true;
-		        supportsVariableType: true;
-		        supportsArgsCanBeInterpretedByShell: true;
-		        supportsMemoryEvent: true;
-		        supportsStartDebuggingRequest: true;
-		        locale: 'en'.
 ]

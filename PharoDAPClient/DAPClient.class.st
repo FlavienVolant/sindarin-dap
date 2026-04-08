@@ -176,8 +176,6 @@ DAPClient >> handleRequest: requestAsDict [
 			header := 'Content-Length: ' , bytes size printString , String crlf
 			          , String crlf.
 
-			Transcript showCr: (STONJSON toStringPretty: json).
-
 			socket nextPutAll: header asByteArray.
 			socket nextPutAll: bytes.
 			socket flush.
