@@ -53,6 +53,12 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
 ]
 
 { #category : 'stack access' }
+SindarinDAPClient >> isExecutionFinished [
+
+	^ (dapHistory eventsOfType: 'terminated') isNotEmpty
+]
+
+{ #category : 'stack access' }
 SindarinDAPClient >> stackFrames: threadId [
 
 	^ self
