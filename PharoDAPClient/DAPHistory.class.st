@@ -48,6 +48,12 @@ DAPHistory >> events [
 	^ events 
 ]
 
+{ #category : 'accessing' }
+DAPHistory >> eventsOfType: aString [
+
+	^ events select: [ :event | (event at: 'event') = aString ]
+]
+
 { #category : 'initialization' }
 DAPHistory >> initialize [
 
