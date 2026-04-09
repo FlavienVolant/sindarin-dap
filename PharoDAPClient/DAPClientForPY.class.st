@@ -30,7 +30,7 @@ DAPClientForPY >> initialize [
 		adapterID: 'python';
 		attachArguments: self attachArguments;
 		breakpoint:
-			'/Users/flavienvolant/Documents/sindarin-dap/py/script.py'
+			'/Users/flavienvolant/Documents/sindarin-dap/py/script_parser.py'
 		line: 1;
 		functionBreakpoint: 'bar' condition: 'isinstance(self, Foo)';
 		functionBreakpoint: 'toto';

@@ -57,5 +57,6 @@ DAPClientForJS >> startSession [
 		adapterID: 'node';
 		port: 5678;
 		attachArguments: self attachArguments;
+		breakpoint: '/Users/flavienvolant/Documents/sindarin-dap/js/script_parser.js' line: 1;
 		startClientSession 
 ]
