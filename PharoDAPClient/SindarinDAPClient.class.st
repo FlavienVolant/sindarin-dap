@@ -6,7 +6,7 @@ Class {
 	#tag : 'Model'
 }
 
-{ #category : 'accessing' }
+{ #category : 'stack access' }
 SindarinDAPClient >> currentStackFrame: threadId [
 
 	^ (self stackFrames: threadId) first
@@ -52,7 +52,7 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
 	^ (response at: 'body') at: key
 ]
 
-{ #category : 'accessing' }
+{ #category : 'stack access' }
 SindarinDAPClient >> stackFrames: threadId [
 
 	^ self
