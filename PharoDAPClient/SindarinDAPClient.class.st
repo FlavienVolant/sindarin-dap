@@ -44,10 +44,10 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
 	self delayForResponse wait.
 
 	response ifNil: [
-		^ Error new signal: 'StackTrace response timeout !' ].
+		^ Error new signal: 'Response timeout !' ].
 
 	(response at: 'success') ifFalse: [
-		^ Error new signal: 'StackTrace request failed !' ].
+		^ Error new signal: 'Request failed !' ].
 
 	^ (response at: 'body') at: key
 ]
