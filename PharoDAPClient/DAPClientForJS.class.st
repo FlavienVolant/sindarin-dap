@@ -31,12 +31,12 @@ DAPClientForJS >> child [
 DAPClientForJS >> handleStartDebuggingRequest: aStartDebuggingRequest [
 
 	child := DAPClientForJSStartDebug new attachOtherArguments:
-		               (aStartDebuggingRequest
-			                at: 'arguments'
-			                at: 'configuration').
+		         (aStartDebuggingRequest at: 'arguments' at: 'configuration').
 	child startSession.
 
-	(ClientDAPPresenter newWithClient: child) open
+	(ClientDAPPresenter newWithClient: child) open.
+
+	self closeConnection
 ]
 
 { #category : 'initialization' }
