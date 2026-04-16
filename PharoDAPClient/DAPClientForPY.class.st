@@ -27,9 +27,9 @@ DAPClientForPY >> dapRegistryAt: keyAsString put: valueAsString [
 		onResponse: [ :resp |
 				self setExpression: (DAPSetExpressionArguments new
 						 expression:
-							 '__import__("builtins").__dap_registry__["id_' , keyAsString
+							 '__import__("builtins").__dap_registry__["' , keyAsString
 							 , '"]';
-						 value: 'id(' , valueAsString , ')';
+						 value: valueAsString;
 						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
 ]
 
