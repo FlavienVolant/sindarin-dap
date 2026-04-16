@@ -12,9 +12,15 @@ SindarinDAPClient >> currentStackFrame: threadId [
 	^ (self stackFrames: threadId) first
 ]
 
+{ #category : 'registry' }
+SindarinDAPClient >> dapRegistryAt: keyAsString put: valueAsString [
+
+	^ self subclassResponsibility
+]
+
 { #category : 'private' }
 SindarinDAPClient >> delayForResponse [
-	^ Delay forMilliseconds: 100
+	^ Delay forMilliseconds: 200
 ]
 
 { #category : 'evaluating' }
@@ -50,6 +56,12 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
 		^ Error new signal: 'Request failed !' ].
 
 	^ (response at: 'body') at: key
+]
+
+{ #category : 'registry' }
+SindarinDAPClient >> initializeDapRegistry [
+
+	^ self subclassResponsibility
 ]
 
 { #category : 'stack access' }

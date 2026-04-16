@@ -108,6 +108,12 @@ ClientDAPPresenter >> continue: aThreadId [
 	clientDAP continue: args
 ]
 
+{ #category : 'accessing' }
+ClientDAPPresenter >> dapRegistryAt: keyAsString put: valueAsString [
+
+	self clientDAP dapRegistryAt: keyAsString put: valueAsString
+]
+
 { #category : 'layout' }
 ClientDAPPresenter >> defaultLayout [
 
@@ -178,12 +184,14 @@ ClientDAPPresenter >> displayResponse: responseAsDict [
 ClientDAPPresenter >> evaluate: frameId [
 
 	| args |
+	self halt.
 	args := DAPEvaluateArguments new
 		        context: 'repl';
 		        frameId: frameId;
-		        expression: '__pydevd_ret_val_dict["Foo.bar"]'.
-	
-	clientDAP evaluate: args 
+		        expression:
+			        'foo'.
+
+	clientDAP evaluate: args
 ]
 
 { #category : 'protocol' }
@@ -225,6 +233,12 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Goto' iconName: #references ask: 'Goto Target Id ?' do: #goto:. 
 	self addCommand: 'Step In Targets' iconName: #branch ask: 'Frame Id ?'  do: #stepInTargets:.
 	self addCommand: 'Disconnect' iconName: #close do: #closeConnection
+]
+
+{ #category : 'initialization' }
+ClientDAPPresenter >> initializeDapRegistry [
+
+	self clientDAP initializeDapRegistry
 ]
 
 { #category : 'initialization' }
@@ -316,9 +330,10 @@ ClientDAPPresenter >> scopes: aFrameId [
 ClientDAPPresenter >> setExpression: aFramedId [
 
 	| args |
+	self halt.
 	args := DAPSetExpressionArguments new
-		        expression: 'Bar.toto';
-		        value: 'lambda self: bar.toto()';
+		        expression: '__instance_to_follow_1__';
+		        value: 'bar';
 		        frameId: aFramedId.
 
 	clientDAP setExpression: args

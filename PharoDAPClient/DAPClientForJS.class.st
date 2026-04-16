@@ -17,7 +17,7 @@ DAPClientForJS >> attachArguments [
 		  ('type' -> 'pwa-node').
 		  ('request' -> 'attach').
 		  ('address' -> 'localhost').
-		  ('port' -> '9229').
+		  ('port' -> '5005').
 		  ('continueOnAttach' -> true) } asDictionary
 ]
 
@@ -25,6 +25,19 @@ DAPClientForJS >> attachArguments [
 DAPClientForJS >> child [
 
 	^ child
+]
+
+{ #category : 'registry' }
+DAPClientForJS >> dapRegistryAt: keyAsString put: valueAsString [
+
+	self
+		stackTrace: (DAPStackTraceArguments new threadId: 1)
+		onResponse: [ :resp |
+				self setExpression: (DAPSetExpressionArguments new
+						 expression:
+							 'globalThis.__dap_registry__["' , keyAsString , '"]';
+						 value: valueAsString;
+						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
 ]
 
 { #category : 'handle request' }
@@ -49,6 +62,18 @@ DAPClientForJS >> initialize [
 		put: [ :req | self handleStartDebuggingRequest: req ]
 ]
 
+{ #category : 'registry' }
+DAPClientForJS >> initializeDapRegistry [
+
+	self
+		stackTrace: (DAPStackTraceArguments new threadId: 1)
+		onResponse: [ :resp |
+				self setExpression: (DAPSetExpressionArguments new
+						 expression: 'globalThis.__dap_registry__';
+						 value: '{}';
+						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
+]
+
 { #category : 'initialization' }
 DAPClientForJS >> startSession [
 	
@@ -57,6 +82,6 @@ DAPClientForJS >> startSession [
 		adapterID: 'node';
 		port: 5678;
 		attachArguments: self attachArguments;
-		breakpoint: '/Users/flavienvolant/Documents/sindarin-dap/js/script_parser.js' line: 1;
+		breakpoint: '/Users/flavienvolant/Documents/sindarin-dap/js/script.js' line: 1;
 		startClientSession 
 ]
