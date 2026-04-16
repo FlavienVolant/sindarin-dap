@@ -19,7 +19,6 @@ It also implements a callback mechanism to handle:
 - Responses to specific requests
 - Incoming requests and events from the DAP server
 
----
 
 ### `SindarinDAPClient`
 
@@ -36,7 +35,6 @@ Since the client may need to store data inside the debuggee, and this behavior d
 
 These require DAP capabilities such as `supportSetExpressions` or `supportSetVariables`.
 
----
 
 ### `DAPClientBuilder`
 
@@ -48,7 +46,6 @@ It handles:
 
 See the `Examples` `initialize` methods for usage.
 
----
 
 ### `ClientDAPPresenter`
 
@@ -59,7 +56,6 @@ See the `Examples` `initialize` methods for usage.
 
 that go through the client.
 
----
 
 ## Supported Languages
 
@@ -125,22 +121,55 @@ client := ClientDAPPresenter newWithClient: DAPClientForPY new.
 client open.
 ```
 
-## JS DAP
+## JavaScript (Node.js)
 
-Process to debug
+This client uses the Microsoft **vscode-js-debug** adapter.
+
+
+### Requirements
+
+- Node.js
+- [`vscode-js-debug`](https://github.com/microsoft/vscode-js-debug) (tested with `v1.112.0`)
+
+
+### Getting the JavaScript Debug Adapter
+
+Download a release from:
+
+https://github.com/microsoft/vscode-js-debug/releases
+
+Extract it, then locate the DAP server entry point:
 ```
+js-debug/src/dapDebugServer.js
+```
+
+
+### Starting the Target Script
+
+Run your Node.js script in debug mode:
+
+```bash
 node --inspect-brk=0.0.0.0:9229 js/script.js
 ```
 
-Adapter
-```
-node js/js-debug/src/dapDebugServer.js 5678
-```
+This starts Node with the inspector protocol enabled and waits for a debugger to attach.
 
-Client (supportsStartDebuggingRequest)
+
+### Starting the DAP Adapter
+
+Launch the debug adapter server:
+```
+node js-debug/src/dapDebugServer.js 5678
+```
+The adapter will listen for DAP connections on port `5678`.
+
+
+### Client Configuration (Pharo)
+
+This adapter require the client to support `startDebuggingRequest`. Therefore, a second DAP client (`DAPClientForJSStartDebug`) is created with extended `attachArguments`.
+
 ``` smalltalk
 initialize
-
 	super initialize.
 
 	requestHandlers
@@ -152,15 +181,20 @@ handleStartDebuggingRequest: aStartDebuggingRequest
 
 	| childClient |
 
-	childClient := DAPClientForJSStartDebug new attachOtherArguments:
-		               (aStartDebuggingRequest
-			                at: 'arguments'
-			                at: 'configuration').
+	childClient := DAPClientForJSStartDebug new
+		attachOtherArguments:
+			(aStartDebuggingRequest
+				at: 'arguments'
+				at: 'configuration').
+
 	childClient startSession.
 
 	(ClientDAPPresenter newWithClient: childClient) open
+```
 
+### Starting a Session
 
+``` smalltalk
 startSession
 	
 	DAPClientBuilder new
@@ -168,19 +202,27 @@ startSession
 		adapterID: 'node';
 		port: 5678;
 		attachArguments: self attachArguments;
-		startClientSession 
-
+		startClientSession
 
 attachArguments
 	
 	^ {
-		  ('name' -> 'attach pharo script.js').
-		  ('type' -> 'pwa-node').
-		  ('request' -> 'attach').
-		  ('address' -> 'localhost').
-		  ('port' -> '9229').
-		  ('continueOnAttach' -> true) } asDictionary
+		('name' -> 'Attach Node.js script.js').
+		('type' -> 'pwa-node').
+		('request' -> 'attach').
+		('address' -> 'localhost').
+		('port' -> 9229).
+		('continueOnAttach' -> true)
+	} asDictionary
+```
 
+### Starting the Debugging Session
+
+- Start your Node.js script with --inspect-brk
+- Start the vscode-js-debug adapter
+- In a Pharo Playground, run:
+``` smalltalk
+client := DAPClientForJS new startSession.
 ```
 
 ## Java
@@ -188,14 +230,12 @@ attachArguments
 The Java client relies on the [java-debug](https://github.com/microsoft/java-debug) adapter from Microsoft.  
 This adapter is designed to work as a plugin for the Java Language Server ([eclipse.jdt.ls](https://github.com/eclipse-jdtls/eclipse.jdt.ls)).
 
----
 
 ### Requirements
 
 - `eclipse.jdt.ls` (Java Language Server)
 - `java-debug` plugin
 
----
 
 ### Getting the Java Debug Adapter
 
@@ -214,7 +254,6 @@ com.microsoft.java.debug.plugin-<version>.jar
 ```
 
 
----
 
 ### Starting the LSP Server with java-debug
 
