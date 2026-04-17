@@ -114,6 +114,19 @@ ClientDAPPresenter >> dapRegistryAt: keyAsString put: valueAsString [
 	self clientDAP dapRegistryAt: keyAsString put: valueAsString
 ]
 
+{ #category : 'commands' }
+ClientDAPPresenter >> dataBreakpointInfo: frameId [
+
+	| args |
+	self halt.
+	args := DAPDataBreakpointInfoArguments new
+		        variablesReference: 4;
+		        frameId: frameId;
+		        name: 'str'.
+
+	clientDAP dataBreakpointInfo: args
+]
+
 { #category : 'layout' }
 ClientDAPPresenter >> defaultLayout [
 
@@ -326,6 +339,19 @@ ClientDAPPresenter >> scopes: aFrameId [
 	| args |
 	args := DAPScopesArguments new frameId: aFrameId.
 	clientDAP scopes: args
+]
+
+{ #category : 'commands' }
+ClientDAPPresenter >> setDataBreakpoint [
+
+	| args |
+	self halt.
+	args := DAPSetDataBreakpointsArguments new breakpoints:
+		        { (DAPDataBeakpoint new
+			         dataId: 'example.Bar#str';
+			         accessType: 'readWrite') }.
+
+	clientDAP setDataBreakPoints: args
 ]
 
 { #category : 'commands' }

@@ -85,6 +85,21 @@ DAPClient >> dapHistory [
 ]
 
 { #category : 'requests' }
+DAPClient >> dataBreakpointInfo: dataBreakpointInfoArguments [
+
+	self dataBreakpointInfo: dataBreakpointInfoArguments onResponse: [ :resp | ]
+]
+
+{ #category : 'requests' }
+DAPClient >> dataBreakpointInfo: dataBreakpointInfoArguments onResponse: aBlock [
+
+	| request |
+	request := DAPDataBreakpointInfoRequest withArguments:
+		           dataBreakpointInfoArguments.
+	self sendRequest: request onResponse: aBlock
+]
+
+{ #category : 'requests' }
 DAPClient >> disconnect [
 	
 	self disconnectOnResponse: [ :resp | ]
@@ -352,6 +367,23 @@ DAPClient >> setBreakpoints: setBreakPointsArguments onResponse: aBlock [
 	| request |
 	request := DAPSetBreakpointsRequest withArguments:
 		           setBreakPointsArguments.
+	self sendRequest: request onResponse: aBlock 
+]
+
+{ #category : 'requests' }
+DAPClient >> setDataBreakPoints: setDataBreakpointsArguments [
+
+	self
+		setDataBreakPoints: setDataBreakpointsArguments
+		onResponse: [ :resp |  ]
+]
+
+{ #category : 'requests' }
+DAPClient >> setDataBreakPoints: setDataBreakpointsArguments onResponse: aBlock [
+
+	| request |
+	request := DAPSetDataBreakpointsRequest withArguments:
+		           setDataBreakpointsArguments.
 	self sendRequest: request onResponse: aBlock 
 ]
 
