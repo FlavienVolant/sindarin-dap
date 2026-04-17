@@ -83,6 +83,19 @@ SindarinDAPClient >> stackFrames: threadId [
 
 { #category : 'stepping - steps' }
 SindarinDAPClient >> stepUntil: aPredicate [
+	"aPredicate is expected to be a ByteString or a BlockClosure"
+
+	aPredicate stepUntilOn: self
+]
+
+{ #category : 'stepping - steps' }
+SindarinDAPClient >> stepUntilBlock: aBlock [
+
+	self flag: 'TODO'
+]
+
+{ #category : 'stepping - steps' }
+SindarinDAPClient >> stepUntilString: aString [
 
 	| threadId frameId bool |
 	threadId := 1.
@@ -90,7 +103,7 @@ SindarinDAPClient >> stepUntil: aPredicate [
 
 	[ bool ] whileFalse: [
 			frameId := (self currentStackFrame: threadId) at: 'id'.
-			bool := (self evaluate: aPredicate frameId: frameId) asLowercase
+			bool := (self evaluate: aString frameId: frameId) asLowercase
 			        = 'true'.
 
 			bool ifFalse: [
