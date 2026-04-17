@@ -73,7 +73,7 @@ ClientDAPPresenter >> clientDAP: aDAPClient [
 	self updateMessageList
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> closeConnection [
 
 	clientDAP closeConnection
@@ -94,13 +94,13 @@ ClientDAPPresenter >> colorForMessage: messageAsDict [
 	^ Color white
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> continue [
 
 	self continue: 1
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> continue: aThreadId [
 
 	| args |
@@ -180,7 +180,7 @@ ClientDAPPresenter >> displayResponse: responseAsDict [
 			 ifNotNil: [ STONJSON toStringPretty: request asDAPJSON ])
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> evaluate: frameId [
 
 	| args |
@@ -194,7 +194,7 @@ ClientDAPPresenter >> evaluate: frameId [
 	clientDAP evaluate: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> goto: targetId [
 	
 	| args |
@@ -204,7 +204,7 @@ ClientDAPPresenter >> goto: targetId [
 	clientDAP goto: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> gotoTarget: line [
 	
 	| args |
@@ -223,7 +223,7 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Stack Trace' iconName: #browse do: #stackTrace.
 	self addCommand: 'Scopes' iconName: #folder ask: 'Frame Id ?' do: #scopes:.
 	self addCommand: 'Variables' iconName: #table ask: 'Variables Reference ?' do: #variables:.
-	self addCommand: 'Continue' iconName: #go do: #continue. 
+	self addCommand: 'Continue' iconName: #go do: #continue.
 	self addCommand: 'Next' iconName: #right do: #next.
 	self addCommand: 'Step In' iconName: #into do: #stepInDAP.
 	self addCommand: 'Step Out' iconName: #over do: #stepOut.
@@ -231,7 +231,9 @@ ClientDAPPresenter >> initializeCommandBar [
 	self addCommand: 'Set Expression' iconName: #edit  ask: 'Frame Id ?' do: #setExpression:. 
 	self addCommand: 'Goto Target' iconName: #hierarchy ask: 'Line ?' do: #gotoTarget:.
 	self addCommand: 'Goto' iconName: #references ask: 'Goto Target Id ?' do: #goto:. 
-	self addCommand: 'Step In Targets' iconName: #branch ask: 'Frame Id ?'  do: #stepInTargets:.
+	self addCommand: 'Step In Targets' iconName: #branch ask: 'Frame Id ?' do: #stepInTargets:.
+	self addCommand: 'Data Breakpoint Info' iconName: #database ask: 'Frame Id ?' do: #dataBreakpointInfo:.
+	self addCommand: 'Data Breakpoint' iconName: #databaseAdd do: #setDataBreakpoint .
 	self addCommand: 'Disconnect' iconName: #close do: #closeConnection
 ]
 
@@ -296,13 +298,13 @@ ClientDAPPresenter >> initializeWindow: aWindowPresenter [
 		initialExtent: 800@400
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> next [
 
 	self next: 1
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> next: aThreadId [
 
 	| args |
@@ -318,7 +320,7 @@ ClientDAPPresenter >> open [
 	window whenClosedDo: [ self closeConnection ]
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> scopes: aFrameId [
 
 	| args |
@@ -326,7 +328,7 @@ ClientDAPPresenter >> scopes: aFrameId [
 	clientDAP scopes: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> setExpression: aFramedId [
 
 	| args |
@@ -339,19 +341,19 @@ ClientDAPPresenter >> setExpression: aFramedId [
 	clientDAP setExpression: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stackTrace [
 
 	self stackTrace: 1
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stackTrace: aThreadId [
 
 	self stackTrace: aThreadId onResponse: [ :resp |  ]
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stackTrace: aThreadId onResponse: aBlock [
 
 	| args |
@@ -370,13 +372,13 @@ ClientDAPPresenter >> stackTrace: aThreadId onResponse: aBlock [
 	clientDAP stackTrace: args onResponse: aBlock
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stepInDAP [
 
 	self stepInDAP: 1
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stepInDAP: aThreadId [
 
 	| args |
@@ -384,7 +386,7 @@ ClientDAPPresenter >> stepInDAP: aThreadId [
 	clientDAP stepIn: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stepInTargets: frameId [
 
 	| args |
@@ -392,13 +394,13 @@ ClientDAPPresenter >> stepInTargets: frameId [
 	clientDAP stepInTargets: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stepOut [
 	
 	self stepOut: 1
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> stepOut: aThreadId [
 
 	| args |
@@ -406,7 +408,7 @@ ClientDAPPresenter >> stepOut: aThreadId [
 	clientDAP stepOut: args
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> threads [
 
 	clientDAP threads
@@ -438,7 +440,7 @@ ClientDAPPresenter >> updateWithResponse: aDAPResponse [
 	self updateMessageList
 ]
 
-{ #category : 'protocol' }
+{ #category : 'commands' }
 ClientDAPPresenter >> variables: aVariablesReference [
 
 	| args |
