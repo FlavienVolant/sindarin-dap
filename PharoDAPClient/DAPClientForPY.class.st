@@ -64,12 +64,12 @@ DAPClientForPY >> initializeDapRegistry [
 ]
 
 { #category : 'stack access' }
-DAPClientForPY >> variablesForObject: aVariableName inContext: frameId [
+DAPClientForPY >> variablesForObject: aVariableName inStackFrame: frameId [
 
 	| specialVariablesReference |
 	specialVariablesReference := (super
 		                              variablesForObject: aVariableName
-		                              inContext: frameId) first at:
+		                              inStackFrame: frameId) first at:
 		                             'variablesReference'.
 	^ self variablesForReference: specialVariablesReference
 ]

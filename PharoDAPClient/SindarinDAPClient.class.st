@@ -7,6 +7,25 @@ Class {
 }
 
 { #category : 'stack access' }
+SindarinDAPClient >> currentFrame [
+
+	^ (self
+		   handleAsyncResponse: [ :response |
+				   self
+					   stackTrace: (DAPStackTraceArguments new
+							    threadId: self mainThreadId;
+							    levels: 1)
+					   onResponse: response ]
+		   returning: 'stackFrames') first
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> currentFrameId [
+
+	^ self currentFrame at: 'id'
+]
+
+{ #category : 'stack access' }
 SindarinDAPClient >> currentStackFrame: threadId [
 
 	^ (self stackFrames: threadId) first
@@ -35,6 +54,53 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 							   expression: aString)
 					  onResponse: onResponse ]
 		  returning: 'result'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> halt: objName on: aString [
+	"Require supportDataBreakpoints.
+	aString is write | read | readWrite"
+
+	| frameId objRef objVars dataBreakpoints |
+	self flag: 'Set replace breakpoints'.
+
+	frameId := self currentFrameId.
+	objRef := self variableReferenceFor: objName inStackFrame: frameId.
+	objVars := self variablesForObject: objName inStackFrame: frameId.
+
+	dataBreakpoints := objVars collect: [ :variable |
+			                   | dataId |
+			                   dataId := self
+				                             handleAsyncResponse: [ :response |
+						                             self
+							                             dataBreakpointInfo:
+								                             (DAPDataBreakpointInfoArguments
+									                              new
+									                              variablesReference: objRef;
+									                              frameId: frameId;
+									                              name: (variable at: 'name'))
+							                             onResponse: response ]
+				                             returning: 'dataId'.
+
+			                   DAPDataBeakpoint new
+				                   dataId: dataId;
+										condition: 'true'; "TODO"
+				                   accessType: aString ].
+
+	self setDataBreakPoints:
+		(DAPSetDataBreakpointsArguments new breakpoints: dataBreakpoints )
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnRead: objName [
+
+	self halt: objName on: 'read'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnWrite: objName [
+
+	self halt: objName on: 'write'
 ]
 
 { #category : 'private' }
@@ -68,6 +134,11 @@ SindarinDAPClient >> initializeDapRegistry [
 SindarinDAPClient >> isExecutionFinished [
 
 	^ (dapHistory eventsOfType: 'terminated') isNotEmpty
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> mainThreadId [
+	^ 1
 ]
 
 { #category : 'stack access' }
@@ -124,20 +195,29 @@ SindarinDAPClient >> stepUntilString: aString [
 ]
 
 { #category : 'stack access' }
-SindarinDAPClient >> variablesForObject: aVariableName inContext: frameId [
+SindarinDAPClient >> variableReferenceFor: aVariableName inStackFrame: frameId [
+
+	| varRefScopeLocal variablesLocal |
+	varRefScopeLocal := (self scopesForFrame: frameId) first at:
+		                    'variablesReference'.
+	variablesLocal := self variablesForReference: varRefScopeLocal.
+	^ (variablesLocal detect: [ :var | (var at: 'name') = aVariableName ])
+		  at: 'variablesReference'
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> variablesForObject: aVariableName inStackFrame: frameId [
 	"Assumes DAP hierarchy: scopes -> variables -> variables.
 	Expands locals, then the target variable, to access its attributes.
 	You may need to override this method if the debug adapter introduces
 	intermediate nodes or uses a different variable hierarchy."
 
-	| varRefScopeLocal variablesLocal varRefObject |
-	varRefScopeLocal := (self scopesForFrame: frameId) first at:
-		                    'variablesReference'.
-	variablesLocal := self variablesForReference: varRefScopeLocal.
-	varRefObject := variablesLocal detect: [ :var |
-		                (var at: 'name') = aVariableName ].
+	| varRefObject |
+	varRefObject := self
+		                variableReferenceFor: aVariableName
+		                inStackFrame: frameId.
 
-	^ self variablesForReference: (varRefObject at: 'variablesReference')
+	^ self variablesForReference: (varRefObject)
 ]
 
 { #category : 'stack access' }
