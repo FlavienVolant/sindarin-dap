@@ -62,3 +62,14 @@ DAPClientForPY >> initializeDapRegistry [
 							 '__import__("builtins").__dict__.setdefault("__dap_registry__", {})';
 						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
 ]
+
+{ #category : 'stack access' }
+DAPClientForPY >> variablesForObject: aVariableName inContext: frameId [
+
+	| specialVariablesReference |
+	specialVariablesReference := (super
+		                              variablesForObject: aVariableName
+		                              inContext: frameId) first at:
+		                             'variablesReference'.
+	^ self variablesForReference: specialVariablesReference
+]

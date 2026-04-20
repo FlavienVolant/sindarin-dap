@@ -71,6 +71,18 @@ SindarinDAPClient >> isExecutionFinished [
 ]
 
 { #category : 'stack access' }
+SindarinDAPClient >> scopesForFrame: aFrameId [
+	"take a valid frame id and return a collection of DAPScope"
+
+	^ self
+		  handleAsyncResponse: [ :onResponse |
+				  self
+					  scopes: (DAPScopesArguments new frameId: aFrameId)
+					  onResponse: onResponse ]
+		  returning: 'scopes'
+]
+
+{ #category : 'stack access' }
 SindarinDAPClient >> stackFrames: threadId [
 
 	^ self
@@ -109,4 +121,35 @@ SindarinDAPClient >> stepUntilString: aString [
 			bool ifFalse: [
 					self stepIn: (DAPStepInArguments new threadId: threadId).
 					self delayForResponse wait ] ]
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> variablesForObject: aVariableName inContext: frameId [
+	"Assumes DAP hierarchy: scopes -> variables -> variables.
+	Expands locals, then the target variable, to access its attributes.
+	You may need to override this method if the debug adapter introduces
+	intermediate nodes or uses a different variable hierarchy."
+
+	| varRefScopeLocal variablesLocal varRefObject |
+	varRefScopeLocal := (self scopesForFrame: frameId) first at:
+		                    'variablesReference'.
+	variablesLocal := self variablesForReference: varRefScopeLocal.
+	varRefObject := variablesLocal detect: [ :var |
+		                (var at: 'name') = aVariableName ].
+
+	^ self variablesForReference: (varRefObject at: 'variablesReference')
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> variablesForReference: aVarRef [
+
+	"take a valid variable reference and return a collection of DAPVariables"
+
+	^ self
+		  handleAsyncResponse: [ :onResponse |
+				  self
+					  variables:
+					  (DAPVariablesArguments new variablesReference: aVarRef)
+					  onResponse: onResponse ]
+		  returning: 'variables'
 ]
