@@ -45,9 +45,8 @@ DAPClientForPY >> initialize [
 		attachArguments: self attachArguments;
 		breakpoint:
 			'/Users/flavienvolant/Documents/sindarin-dap/py/script.py'
-		line: 8;
-		functionBreakpoint: 'toto'
-		condition: 'id(self) == __import__("builtins").__dap_registry__.get("id_instance_to_follow_1")';
+		line: 10;
+		backend: DAPBackendPY new;
 		startClientSession
 ]
 
