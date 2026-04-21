@@ -31,7 +31,7 @@ DAPClientForJS >> child [
 DAPClientForJS >> dapRegistryAt: keyAsString put: valueAsString [
 
 	self
-		stackTrace: (DAPStackTraceArguments new threadId: 1)
+		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
 		onResponse: [ :resp |
 				self setExpression: (DAPSetExpressionArguments new
 						 expression:
@@ -66,7 +66,7 @@ DAPClientForJS >> initialize [
 DAPClientForJS >> initializeDapRegistry [
 
 	self
-		stackTrace: (DAPStackTraceArguments new threadId: 1)
+		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
 		onResponse: [ :resp |
 				self setExpression: (DAPSetExpressionArguments new
 						 expression: 'globalThis.__dap_registry__';

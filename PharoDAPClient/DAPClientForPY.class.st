@@ -23,7 +23,7 @@ DAPClientForPY >> attachArguments [
 DAPClientForPY >> dapRegistryAt: keyAsString put: valueAsString [
 
 	self
-		stackTrace: (DAPStackTraceArguments new threadId: 1)
+		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
 		onResponse: [ :resp |
 				self setExpression: (DAPSetExpressionArguments new
 						 expression:
@@ -55,7 +55,7 @@ DAPClientForPY >> initialize [
 DAPClientForPY >> initializeDapRegistry [
 
 	self
-		stackTrace: (DAPStackTraceArguments new threadId: 1)
+		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
 		onResponse: [ :resp |
 				self evaluate: (DAPEvaluateArguments new
 						 expression:
