@@ -37,18 +37,13 @@ DAPClientForJAVA >> initialize [
 
 	DAPClientBuilder new
 		client: self;
-		port: 63461;
+		port: 64894;
 		adapterID: 'java';
 		attachArguments: self attachArguments;
 		breakpoint:
 			'/Users/flavienvolant/Documents/sindarin-dap/java/src/main/java/example/Main.java'
-		line: 5;
-		breakpoint:
-			'/Users/flavienvolant/Documents/sindarin-dap/java/src/main/java/example/Main.java'
 		line: 9;
-		functionBreakpoint: 'example.Bar#toto'
-		condition:
-			'Integer.toString(System.identityHashCode(this)).equals(System.getProperty("id_instance_to_follow_1"))';
+		backend: DAPBackendJAVA new;
 		startClientSession
 ]
 

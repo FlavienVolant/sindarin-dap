@@ -1,10 +1,26 @@
 Class {
 	#name : 'SindarinDAPClient',
 	#superclass : 'DAPClient',
+	#instVars : [
+		'backend'
+	],
 	#category : 'PharoDAPClient-Model',
 	#package : 'PharoDAPClient',
 	#tag : 'Model'
 }
+
+{ #category : 'accessing' }
+SindarinDAPClient >> backend [
+
+	^ backend
+]
+
+{ #category : 'accessing' }
+SindarinDAPClient >> backend: aDAPBackend [
+
+	backend := aDAPBackend.
+	backend clientDAP: self
+]
 
 { #category : 'stack access' }
 SindarinDAPClient >> currentFrame [
@@ -31,12 +47,6 @@ SindarinDAPClient >> currentStackFrame: threadId [
 	^ (self stackFrames: threadId) first
 ]
 
-{ #category : 'registry' }
-SindarinDAPClient >> dapRegistryAt: keyAsString put: valueAsString [
-
-	^ self subclassResponsibility
-]
-
 { #category : 'private' }
 SindarinDAPClient >> delayForResponse [
 	^ Delay forMilliseconds: 200
@@ -57,7 +67,129 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 ]
 
 { #category : 'breakpoints' }
-SindarinDAPClient >> halt: objName on: aString [
+SindarinDAPClient >> haltOn: objName message: msgName [
+
+	self setFunctionBreakpoints:
+		(DAPSetFunctionBreakpointsArguments new breakpoints:
+			 { (DAPFunctionBreakpoint new
+				  name: msgName;
+				  condition: (backend buildInstanceCondition: objName)) })
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnCalls: objName [
+
+	self flag: 'todo'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnRead: objName [
+
+	self setBreakOnAllAttributesOf: objName mode: 'read'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnRead: objName attribute: attrName [
+
+	self setBreakOn: objName attribute: attrName mode: 'read'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnWrite: objName [
+
+	self setBreakOnAllAttributesOf: objName mode: 'write'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> haltOnWrite: objName attribute: attrName [
+
+	self setBreakOn: objName attribute: attrName mode: 'write'
+]
+
+{ #category : 'private' }
+SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
+	"anAction is a block that takes a single argument, a block to receive the response.
+    This method waits for the response, checks for errors, and returns the value at 'key' 
+    inside the response body."
+
+	| response |
+	response := nil.
+
+	anAction value: [ :resp | response := resp ].
+	self delayForResponse wait.
+
+	response ifNil: [
+		^ Error new signal: 'Response timeout !' ].
+
+	(response at: 'success') ifFalse: [
+		^ Error new signal: 'Request failed !' ].
+
+	^ (response at: 'body') at: key
+]
+
+{ #category : 'initialization' }
+SindarinDAPClient >> initializeDapRegistry [
+
+	backend initializeRegistry
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> isExecutionFinished [
+
+	^ (dapHistory eventsOfType: 'terminated') isNotEmpty
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> mainThreadId [
+	^ 1
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> scopesForFrame: aFrameId [
+	"take a valid frame id and return a collection of DAPScope"
+
+	^ self
+		  handleAsyncResponse: [ :onResponse |
+				  self
+					  scopes: (DAPScopesArguments new frameId: aFrameId)
+					  onResponse: onResponse ]
+		  returning: 'scopes'
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> setBreakOn: objName attribute: attrName mode: aString [
+	"Require supportDataBreakpoints.
+	aString is write | read | readWrite"
+
+	| frameId objRef dataBreakpoints dataId |
+	self flag: 'Set replace breakpoints'.
+
+	frameId := self currentFrameId.
+	objRef := self variableReferenceFor: objName inStackFrame: frameId.
+
+	dataId := self
+		          handleAsyncResponse: [ :response |
+				          self
+					          dataBreakpointInfo:
+						          (DAPDataBreakpointInfoArguments new
+							           variablesReference: objRef;
+							           frameId: frameId;
+							           name: attrName)
+					          onResponse: response ]
+		          returning: 'dataId'.
+
+	dataBreakpoints := { (DAPDataBreakpoint new
+		                    dataId: dataId;
+		                    condition:
+			                    (self backend buildInstanceCondition: objName);
+		                    accessType: aString) }.
+
+	self setDataBreakPoints:
+		(DAPSetDataBreakpointsArguments new breakpoints: dataBreakpoints)
+]
+
+{ #category : 'breakpoints' }
+SindarinDAPClient >> setBreakOnAllAttributesOf: objName mode: aString [
 	"Require supportDataBreakpoints.
 	aString is write | read | readWrite"
 
@@ -82,75 +214,14 @@ SindarinDAPClient >> halt: objName on: aString [
 							                             onResponse: response ]
 				                             returning: 'dataId'.
 
-			                   DAPDataBeakpoint new
+			                   DAPDataBreakpoint new
 				                   dataId: dataId;
-										condition: 'true'; "TODO"
+				                   condition:
+					                   (self backend buildInstanceCondition: objName);
 				                   accessType: aString ].
 
 	self setDataBreakPoints:
-		(DAPSetDataBreakpointsArguments new breakpoints: dataBreakpoints )
-]
-
-{ #category : 'breakpoints' }
-SindarinDAPClient >> haltOnRead: objName [
-
-	self halt: objName on: 'read'
-]
-
-{ #category : 'breakpoints' }
-SindarinDAPClient >> haltOnWrite: objName [
-
-	self halt: objName on: 'write'
-]
-
-{ #category : 'private' }
-SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
-	"anAction is a block that takes a single argument, a block to receive the response.
-    This method waits for the response, checks for errors, and returns the value at 'key' 
-    inside the response body."
-
-	| response |
-	response := nil.
-
-	anAction value: [ :resp | response := resp ].
-	self delayForResponse wait.
-
-	response ifNil: [
-		^ Error new signal: 'Response timeout !' ].
-
-	(response at: 'success') ifFalse: [
-		^ Error new signal: 'Request failed !' ].
-
-	^ (response at: 'body') at: key
-]
-
-{ #category : 'registry' }
-SindarinDAPClient >> initializeDapRegistry [
-
-	^ self subclassResponsibility
-]
-
-{ #category : 'stack access' }
-SindarinDAPClient >> isExecutionFinished [
-
-	^ (dapHistory eventsOfType: 'terminated') isNotEmpty
-]
-
-{ #category : 'stack access' }
-SindarinDAPClient >> mainThreadId [
-	^ 1
-]
-
-{ #category : 'stack access' }
-SindarinDAPClient >> scopesForFrame: aFrameId [
-	"take a valid frame id and return a collection of DAPScope"
-
-	^ self
-		  handleAsyncResponse: [ :onResponse |
-				  self
-					  scopes: (DAPScopesArguments new frameId: aFrameId)
-					  onResponse: onResponse ]
-		  returning: 'scopes'
+		(DAPSetDataBreakpointsArguments new breakpoints: dataBreakpoints)
 ]
 
 { #category : 'stack access' }
@@ -197,6 +268,8 @@ SindarinDAPClient >> stepUntilString: aString [
 { #category : 'stack access' }
 SindarinDAPClient >> variableReferenceFor: aVariableName inStackFrame: frameId [
 
+	"return the dap variable reference for aVariableName in the frameId stack frame"
+
 	| varRefScopeLocal variablesLocal |
 	varRefScopeLocal := (self scopesForFrame: frameId) first at:
 		                    'variablesReference'.
@@ -210,14 +283,17 @@ SindarinDAPClient >> variablesForObject: aVariableName inStackFrame: frameId [
 	"Assumes DAP hierarchy: scopes -> variables -> variables.
 	Expands locals, then the target variable, to access its attributes.
 	You may need to override this method if the debug adapter introduces
-	intermediate nodes or uses a different variable hierarchy."
+	intermediate nodes or uses a different variable hierarchy.
+	
+	Return a collection of DAPVariables
+	"
 
 	| varRefObject |
 	varRefObject := self
 		                variableReferenceFor: aVariableName
 		                inStackFrame: frameId.
 
-	^ self variablesForReference: (varRefObject)
+	^ self variablesForReference: varRefObject
 ]
 
 { #category : 'stack access' }

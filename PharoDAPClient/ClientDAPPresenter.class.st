@@ -108,12 +108,6 @@ ClientDAPPresenter >> continue: aThreadId [
 	clientDAP continue: args
 ]
 
-{ #category : 'accessing' }
-ClientDAPPresenter >> dapRegistryAt: keyAsString put: valueAsString [
-
-	self clientDAP dapRegistryAt: keyAsString put: valueAsString
-]
-
 { #category : 'commands' }
 ClientDAPPresenter >> dataBreakpointInfo: frameId [
 
@@ -347,7 +341,7 @@ ClientDAPPresenter >> setDataBreakpoint [
 	| args |
 	self halt.
 	args := DAPSetDataBreakpointsArguments new breakpoints:
-		        { (DAPDataBeakpoint new
+		        { (DAPDataBreakpoint new
 			         dataId: 'example.Bar#str';
 			         accessType: 'readWrite') }.
 

@@ -8,7 +8,8 @@ Class {
 		'adapterID',
 		'breakpoints',
 		'functionBreakpoints',
-		'attachArguments'
+		'attachArguments',
+		'backend'
 	],
 	#category : 'PharoDAPClient-Builders',
 	#package : 'PharoDAPClient',
@@ -31,6 +32,12 @@ DAPClientBuilder >> attachArguments: anAttachArguments [
 DAPClientBuilder >> attachClient [
 
 	client attach: attachArguments
+]
+
+{ #category : 'accessing' }
+DAPClientBuilder >> backend: aDAPBackend [
+
+	backend := aDAPBackend
 ]
 
 { #category : 'accessing' }
@@ -163,6 +170,8 @@ DAPClientBuilder >> startClientSession [
 			self configurationDone ].
 
 	self connectClient: [ :resp | self attachClient ].
+
+	(client respondsTo: #backend:) ifTrue: [ client backend: backend ].
 
 	^ client
 ]
