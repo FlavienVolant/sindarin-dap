@@ -38,6 +38,20 @@ DAPBackendPY >> instanceName [
 ]
 
 { #category : 'accessing' }
+DAPBackendPY >> methodsOf: objExpr [
+	"Return a collection of string corresponding to the full name of the methods of objExpr. 
+	Names are send to function breakpoint name"
+
+	| evalResp |
+	evalResp := clientDAP
+		            evaluate:
+		            '[m for m in dir(bar) if callable(getattr(bar, m)) and not m.startswith("__")]'
+		            frameId: clientDAP currentFrameId.
+
+	^ STONJSON fromString: (evalResp at: 'result')
+]
+
+{ #category : 'accessing' }
 DAPBackendPY >> readExpressionForKey: aString [
 	"return ... aString is the key"
 
