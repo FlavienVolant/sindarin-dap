@@ -63,7 +63,6 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 							   frameId: aNumber;
 							   expression: aString)
 					  onResponse: onResponse ]
-		  returning: 'result'
 ]
 
 { #category : 'breakpoints' }
@@ -107,10 +106,9 @@ SindarinDAPClient >> haltOnWrite: objName attribute: attrName [
 ]
 
 { #category : 'private' }
-SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
+SindarinDAPClient >> handleAsyncResponse: anAction [
 	"anAction is a block that takes a single argument, a block to receive the response.
-    This method waits for the response, checks for errors, and returns the value at 'key' 
-    inside the response body."
+    This method waits for the response, checks for errors, and returns the response body."
 
 	| response |
 	response := nil.
@@ -118,13 +116,21 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
 	anAction value: [ :resp | response := resp ].
 	self delayForResponse wait.
 
-	response ifNil: [
-		^ Error new signal: 'Response timeout !' ].
+	response ifNil: [ ^ Error new signal: 'Response timeout !' ].
 
 	(response at: 'success') ifFalse: [
 		^ Error new signal: 'Request failed !' ].
 
-	^ (response at: 'body') at: key
+	^ response at: 'body'
+]
+
+{ #category : 'private' }
+SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
+	"anAction is a block that takes a single argument, a block to receive the response.
+    This method waits for the response, checks for errors, and returns the value at 'key' 
+    inside the response body."
+
+	^ (self handleAsyncResponse: anAction) at: key
 ]
 
 { #category : 'initialization' }
@@ -257,8 +263,8 @@ SindarinDAPClient >> stepUntilString: aString [
 
 	[ bool ] whileFalse: [
 			frameId := (self currentStackFrame: threadId) at: 'id'.
-			bool := (self evaluate: aString frameId: frameId) asLowercase
-			        = 'true'.
+			bool := ((self evaluate: aString frameId: frameId) at: 'result')
+				        asLowercase = 'true'.
 
 			bool ifFalse: [
 					self stepIn: (DAPStepInArguments new threadId: threadId).
