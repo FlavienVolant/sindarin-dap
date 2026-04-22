@@ -19,20 +19,6 @@ DAPClientForPY >> attachArguments [
 		  ('showReturnValue' -> true) } asDictionary
 ]
 
-{ #category : 'registry' }
-DAPClientForPY >> dapRegistryAt: keyAsString put: valueAsString [
-
-	self
-		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
-		onResponse: [ :resp |
-				self setExpression: (DAPSetExpressionArguments new
-						 expression:
-							 '__import__("builtins").__dap_registry__["' , keyAsString
-							 , '"]';
-						 value: valueAsString;
-						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
-]
-
 { #category : 'initialization' }
 DAPClientForPY >> initialize [
 
@@ -48,18 +34,6 @@ DAPClientForPY >> initialize [
 		line: 10;
 		backend: DAPBackendPY new;
 		startClientSession
-]
-
-{ #category : 'registry' }
-DAPClientForPY >> initializeDapRegistry [
-
-	self
-		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
-		onResponse: [ :resp |
-				self evaluate: (DAPEvaluateArguments new
-						 expression:
-							 '__import__("builtins").__dict__.setdefault("__dap_registry__", {})';
-						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
 ]
 
 { #category : 'stack access' }
