@@ -61,6 +61,14 @@ DAPBackend >> instanceName [
 ]
 
 { #category : 'accessing' }
+DAPBackend >> methodsOf: objExpr [
+	"Return a collection of string corresponding to the full name of the methods of objExpr. 
+	Names are send to function breakpoint name"
+
+	^ self subclassResponsibility
+]
+
+{ #category : 'accessing' }
 DAPBackend >> readExpressionForKey: aString [
 	"return ... aString is the key"
 

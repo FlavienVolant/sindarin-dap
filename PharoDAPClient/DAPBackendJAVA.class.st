@@ -37,6 +37,24 @@ DAPBackendJAVA >> instanceName [
 ]
 
 { #category : 'accessing' }
+DAPBackendJAVA >> methodsOf: objExpr [
+	"Return a collection of string corresponding to the full name of the methods of objExpr. 
+	Names are send to function breakpoint name"
+
+	| evalResp |
+	evalResp := clientDAP
+		            evaluate:
+			            'java.util.Arrays.stream(bar.getClass().getMethods())
+    .map(m -> bar.getClass().getPackage().getName() + "." + bar.getClass().getSimpleName() + "#" + m.getName())
+    .toList()'
+		            frameId: clientDAP currentFrameId.
+
+	^ (clientDAP variablesForReference:
+		   (evalResp at: 'variablesReference')) collect: [ :dapVar |
+		  dapVar at: 'value' ]
+]
+
+{ #category : 'accessing' }
 DAPBackendJAVA >> readExpressionForKey: aString [
 	"return ... aString is the key"
 

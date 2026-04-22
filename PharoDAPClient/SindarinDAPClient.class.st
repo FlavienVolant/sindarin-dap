@@ -78,7 +78,11 @@ SindarinDAPClient >> haltOn: objName message: msgName [
 { #category : 'breakpoints' }
 SindarinDAPClient >> haltOnCalls: objName [
 
-	self flag: 'todo'
+	self setFunctionBreakpoints: (DAPSetFunctionBreakpointsArguments new breakpoints:
+			 ((backend methodsOf: objName) collect: [ :methodName |
+					  DAPFunctionBreakpoint new
+						  name: methodName withoutQuoting;
+						  condition: (backend buildInstanceCondition: objName) ]))
 ]
 
 { #category : 'breakpoints' }
