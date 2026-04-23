@@ -16,6 +16,17 @@ Class {
 	#tag : 'Model'
 }
 
+{ #category : 'accessing' }
+DAPClient >> adapterSupport: aCapabilityName [
+	
+	| initResponse |
+	
+	initResponse := dapHistory responseForRequest: 1.
+	initResponse ifNil: [ ^ false ].
+	
+	^ initResponse at: 'body' at: aCapabilityName ifAbsent: [ ^ false ]
+]
+
 { #category : 'requests' }
 DAPClient >> attach: attachArguments [
 
