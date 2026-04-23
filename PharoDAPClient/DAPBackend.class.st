@@ -29,9 +29,23 @@ DAPBackend >> clientDAP: aDAPClient [
 ]
 
 { #category : 'accessing' }
+DAPBackend >> constructorsOf: classExpr [
+	"Return a collection of string corresponding to the full name of the constructors of classExpr. 
+	Names are send to function breakpoint name"
+
+	^ self subclassResponsibility
+]
+
+{ #category : 'accessing' }
 DAPBackend >> equalityExpressionLeft: leftExpr right: rightExpr [
 
 	^ self subclassResponsibility 
+]
+
+{ #category : 'accessing' }
+DAPBackend >> expressionKey: varExpr instanceOf: classExpr [
+
+	^ self subclassResponsibility
 ]
 
 { #category : 'accessing' }

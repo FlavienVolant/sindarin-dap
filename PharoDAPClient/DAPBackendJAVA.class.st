@@ -7,9 +7,23 @@ Class {
 }
 
 { #category : 'accessing' }
+DAPBackendJAVA >> constructorsOf: classExpr [
+	"Return a collection of string corresponding to the full name of the constructors of classExpr. 
+	Names are send to function breakpoint name"
+
+	^ { ('example.' , classExpr , '#<init>') }
+]
+
+{ #category : 'accessing' }
 DAPBackendJAVA >> equalityExpressionLeft: leftExpr right: rightExpr [
 
 	^ leftExpr , '.equals(' , rightExpr , ')'
+]
+
+{ #category : 'accessing' }
+DAPBackendJAVA >> expressionKey: varExpr instanceOf: classExpr [
+
+	^ varExpr , ' instanceof ' , classExpr
 ]
 
 { #category : 'accessing' }

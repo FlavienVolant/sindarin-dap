@@ -7,9 +7,23 @@ Class {
 }
 
 { #category : 'accessing' }
+DAPBackendPY >> constructorsOf: classExpr [
+	"Return a collection of string corresponding to the full name of the constructors of classExpr. 
+	Names are send to function breakpoint name"
+
+	^ { '__init__' }
+]
+
+{ #category : 'accessing' }
 DAPBackendPY >> equalityExpressionLeft: leftExpr right: rightExpr [
 
 	^ leftExpr , ' == ' , rightExpr 
+]
+
+{ #category : 'accessing' }
+DAPBackendPY >> expressionKey: expr instanceOf: classExpr [
+
+	^ 'isinstance(' , expr , ',' , classExpr , ')'
 ]
 
 { #category : 'accessing' }

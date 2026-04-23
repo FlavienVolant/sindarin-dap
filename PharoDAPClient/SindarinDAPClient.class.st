@@ -86,6 +86,20 @@ SindarinDAPClient >> haltOnCalls: objName [
 ]
 
 { #category : 'breakpoints' }
+SindarinDAPClient >> haltOnCreation: className [
+
+	self setFunctionBreakpoints:
+		(DAPSetFunctionBreakpointsArguments new breakpoints:
+			 ((backend constructorsOf: className) collect: [ :constructorName |
+					  DAPFunctionBreakpoint new
+						  name: constructorName withoutQuoting;
+						  condition:
+							  (backend
+								   expressionKey: backend instanceName
+								   instanceOf: className) ]))
+]
+
+{ #category : 'breakpoints' }
 SindarinDAPClient >> haltOnRead: objName [
 
 	self setBreakOnAllAttributesOf: objName mode: 'read'
