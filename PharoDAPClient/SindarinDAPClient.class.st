@@ -2,7 +2,8 @@ Class {
 	#name : 'SindarinDAPClient',
 	#superclass : 'DAPClient',
 	#instVars : [
-		'backend'
+		'backend',
+		'breakpointManager'
 	],
 	#category : 'PharoDAPClient-Model',
 	#package : 'PharoDAPClient',
@@ -68,35 +69,38 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 { #category : 'breakpoints' }
 SindarinDAPClient >> haltOn: objName message: msgName [
 
-	self setFunctionBreakpoints:
-		(DAPSetFunctionBreakpointsArguments new breakpoints:
-			 { (DAPFunctionBreakpoint new
-				  name: msgName;
-				  condition: (backend buildInstanceCondition: objName)) })
+	breakpointManager addFunctionBreakpoint: (DAPFunctionBreakpoint new
+			 name: msgName;
+			 condition: (backend buildInstanceCondition: objName)).
+
+	breakpointManager setFunctionBreakPointsFor: self
 ]
 
 { #category : 'breakpoints' }
 SindarinDAPClient >> haltOnCalls: objName [
 
-	self setFunctionBreakpoints: (DAPSetFunctionBreakpointsArguments new breakpoints:
-			 ((backend methodsOf: objName) collect: [ :methodName |
-					  DAPFunctionBreakpoint new
-						  name: methodName withoutQuoting;
-						  condition: (backend buildInstanceCondition: objName) ]))
+	(backend methodsOf: objName) do: [ :methodName |
+			breakpointManager addFunctionBreakpoint:
+				(DAPFunctionBreakpoint new
+					 name: methodName withoutQuoting;
+					 condition: (backend buildInstanceCondition: objName)) ].
+
+	breakpointManager setFunctionBreakPointsFor: self
 ]
 
 { #category : 'breakpoints' }
 SindarinDAPClient >> haltOnCreation: className [
 
-	self setFunctionBreakpoints:
-		(DAPSetFunctionBreakpointsArguments new breakpoints:
-			 ((backend constructorsOf: className) collect: [ :constructorName |
-					  DAPFunctionBreakpoint new
-						  name: constructorName withoutQuoting;
-						  condition:
-							  (backend
-								   expressionKey: backend instanceName
-								   instanceOf: className) ]))
+	(backend constructorsOf: className) do: [ :constructorName |
+			breakpointManager addFunctionBreakpoint:
+				(DAPFunctionBreakpoint new
+					 name: constructorName withoutQuoting;
+					 condition:
+						 (backend
+							  expressionKey: backend instanceName
+							  instanceOf: className)) ].
+
+	breakpointManager setFunctionBreakPointsFor: self
 ]
 
 { #category : 'breakpoints' }
@@ -149,6 +153,13 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
     inside the response body."
 
 	^ (self handleAsyncResponse: anAction) at: key
+]
+
+{ #category : 'initialization' }
+SindarinDAPClient >> initialize [
+
+	super initialize.
+	breakpointManager := DAPClientBreakpointManager new
 ]
 
 { #category : 'initialization' }
