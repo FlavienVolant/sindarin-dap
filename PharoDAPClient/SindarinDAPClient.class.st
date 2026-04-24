@@ -193,15 +193,18 @@ SindarinDAPClient >> scopesForFrame: aFrameId [
 
 { #category : 'breakpoints' }
 SindarinDAPClient >> setBreakOn: objName attribute: attrName mode: aString [
-	"Require supportDataBreakpoints.
+	"Require supportsDataBreakpoints.
 	aString is write | read | readWrite"
 
-	| frameId objRef dataBreakpoints dataId |
-	self flag: 'Set replace breakpoints'.
+	| frameId objRef dataId |
+	
+	(self adapterSupport: 'supportsDataBreakpoints') ifFalse: [ ^ self ].
 
 	frameId := self currentFrameId.
 	objRef := self variableReferenceFor: objName inStackFrame: frameId.
 
+	"give breakpoint info if dataId has a lifetime ?"
+	"seems to work maybe it's adapter dependent"
 	dataId := self
 		          handleAsyncResponse: [ :response |
 				          self
@@ -213,14 +216,12 @@ SindarinDAPClient >> setBreakOn: objName attribute: attrName mode: aString [
 					          onResponse: response ]
 		          returning: 'dataId'.
 
-	dataBreakpoints := { (DAPDataBreakpoint new
-		                    dataId: dataId;
-		                    condition:
-			                    (self backend buildInstanceCondition: objName);
-		                    accessType: aString) }.
+	breakpointManager addDataBreakpoint: (DAPDataBreakpoint new
+			 dataId: dataId;
+			 condition: (self backend buildInstanceCondition: objName);
+			 accessType: aString).
 
-	self setDataBreakPoints:
-		(DAPSetDataBreakpointsArguments new breakpoints: dataBreakpoints)
+	breakpointManager setDataBreakPointsFor: self
 ]
 
 { #category : 'breakpoints' }
@@ -228,35 +229,30 @@ SindarinDAPClient >> setBreakOnAllAttributesOf: objName mode: aString [
 	"Require supportDataBreakpoints.
 	aString is write | read | readWrite"
 
-	| frameId objRef objVars dataBreakpoints |
-	self flag: 'Set replace breakpoints'.
-
+	| frameId objRef objVars |
 	frameId := self currentFrameId.
 	objRef := self variableReferenceFor: objName inStackFrame: frameId.
 	objVars := self variablesForObject: objName inStackFrame: frameId.
 
-	dataBreakpoints := objVars collect: [ :variable |
-			                   | dataId |
-			                   dataId := self
-				                             handleAsyncResponse: [ :response |
-						                             self
-							                             dataBreakpointInfo:
-								                             (DAPDataBreakpointInfoArguments
-									                              new
-									                              variablesReference: objRef;
-									                              frameId: frameId;
-									                              name: (variable at: 'name'))
-							                             onResponse: response ]
-				                             returning: 'dataId'.
+	objVars do: [ :variable |
+			| dataId |
+			dataId := self
+				          handleAsyncResponse: [ :response |
+						          self
+							          dataBreakpointInfo:
+								          (DAPDataBreakpointInfoArguments new
+									           variablesReference: objRef;
+									           frameId: frameId;
+									           name: (variable at: 'name'))
+							          onResponse: response ]
+				          returning: 'dataId'.
 
-			                   DAPDataBreakpoint new
-				                   dataId: dataId;
-				                   condition:
-					                   (self backend buildInstanceCondition: objName);
-				                   accessType: aString ].
+			breakpointManager addDataBreakpoint: (DAPDataBreakpoint new
+					 dataId: dataId;
+					 condition: (self backend buildInstanceCondition: objName);
+					 accessType: aString) ].
 
-	self setDataBreakPoints:
-		(DAPSetDataBreakpointsArguments new breakpoints: dataBreakpoints)
+	breakpointManager setDataBreakPointsFor: self
 ]
 
 { #category : 'stack access' }

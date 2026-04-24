@@ -47,7 +47,9 @@ DAPClientBreakpointManager >> setBreakPointsFor: aDAPClient [
 { #category : 'adding' }
 DAPClientBreakpointManager >> setDataBreakPointsFor: aDAPClient [
 
-	self flag: 'todo'
+	aDAPClient setDataBreakPoints:
+		(DAPSetDataBreakpointsArguments new breakpoints:
+			 dataBreakpoints asArray)
 ]
 
 { #category : 'adding' }
