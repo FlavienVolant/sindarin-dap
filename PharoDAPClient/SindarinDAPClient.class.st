@@ -66,62 +66,58 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 					  onResponse: onResponse ]
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOn: objName message: msgName [
 
-	breakpointManager addFunctionBreakpoint: (DAPFunctionBreakpoint new
-			 name: msgName;
-			 condition: (backend buildInstanceCondition: objName)).
+	self
+		helperAddFunctionBreakpointName: msgName
+		condition: (backend buildInstanceCondition: objName).
 
 	breakpointManager setFunctionBreakPointsFor: self
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOnCalls: objName [
 
 	(backend methodsOf: objName) do: [ :methodName |
-			breakpointManager addFunctionBreakpoint:
-				(DAPFunctionBreakpoint new
-					 name: methodName withoutQuoting;
-					 condition: (backend buildInstanceCondition: objName)) ].
+			self
+				helperAddFunctionBreakpointName: methodName withoutQuoting
+				condition: (backend buildInstanceCondition: objName) ].
 
 	breakpointManager setFunctionBreakPointsFor: self
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOnCreation: className [
 
 	(backend constructorsOf: className) do: [ :constructorName |
-			breakpointManager addFunctionBreakpoint:
-				(DAPFunctionBreakpoint new
-					 name: constructorName withoutQuoting;
-					 condition:
-						 (backend
-							  expressionKey: backend instanceName
-							  instanceOf: className)) ].
+			self
+				helperAddFunctionBreakpointName: constructorName withoutQuoting
+				condition:
+				(backend expressionKey: backend instanceName instanceOf: className) ].
 
 	breakpointManager setFunctionBreakPointsFor: self
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOnRead: objName [
 
 	self setBreakOnAllAttributesOf: objName mode: 'read'
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOnRead: objName attribute: attrName [
 
 	self setBreakOn: objName attribute: attrName mode: 'read'
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOnWrite: objName [
 
 	self setBreakOnAllAttributesOf: objName mode: 'write'
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOnWrite: objName attribute: attrName [
 
 	self setBreakOn: objName attribute: attrName mode: 'write'
@@ -153,6 +149,29 @@ SindarinDAPClient >> handleAsyncResponse: anAction returning: key [
     inside the response body."
 
 	^ (self handleAsyncResponse: anAction) at: key
+]
+
+{ #category : 'private - breakpoints' }
+SindarinDAPClient >> helperAddDataBreakpointInfo: aDataBreakpointInfo breakpoint: aDataBreakpoint [
+	"expect breakpointInfo to be setup and aDataBreakpoint setup without the dataId wich is return by breakpointInfo"
+
+	aDataBreakpoint dataId: (self
+			 handleAsyncResponse: [ :response |
+				 self dataBreakpointInfo: aDataBreakpointInfo onResponse: response ]
+			 returning: 'dataId').
+	
+	"give breakpoint info if dataId has a lifetime ?"
+	"seems to work maybe it's adapter dependent"
+	
+	breakpointManager addDataBreakpoint: aDataBreakpoint
+]
+
+{ #category : 'private - breakpoints' }
+SindarinDAPClient >> helperAddFunctionBreakpointName: functionName condition: aString [
+
+	breakpointManager addFunctionBreakpoint: (DAPFunctionBreakpoint new
+			 name: functionName;
+			 condition: aString)
 ]
 
 { #category : 'initialization' }
@@ -191,66 +210,48 @@ SindarinDAPClient >> scopesForFrame: aFrameId [
 		  returning: 'scopes'
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'private - breakpoints' }
 SindarinDAPClient >> setBreakOn: objName attribute: attrName mode: aString [
-	"Require supportsDataBreakpoints.
-	aString is write | read | readWrite"
+	"aString is 'write' | 'read' | 'readWrite'"
 
-	| frameId objRef dataId |
-	
+	| frameId objRef |
 	(self adapterSupport: 'supportsDataBreakpoints') ifFalse: [ ^ self ].
 
 	frameId := self currentFrameId.
 	objRef := self variableReferenceFor: objName inStackFrame: frameId.
 
-	"give breakpoint info if dataId has a lifetime ?"
-	"seems to work maybe it's adapter dependent"
-	dataId := self
-		          handleAsyncResponse: [ :response |
-				          self
-					          dataBreakpointInfo:
-						          (DAPDataBreakpointInfoArguments new
-							           variablesReference: objRef;
-							           frameId: frameId;
-							           name: attrName)
-					          onResponse: response ]
-		          returning: 'dataId'.
-
-	breakpointManager addDataBreakpoint: (DAPDataBreakpoint new
-			 dataId: dataId;
-			 condition: (self backend buildInstanceCondition: objName);
-			 accessType: aString).
+	self
+		helperAddDataBreakpointInfo: (DAPDataBreakpointInfoArguments new
+				 variablesReference: objRef;
+				 frameId: frameId;
+				 name: attrName)
+		breakpoint: (DAPDataBreakpoint new
+				 condition: (self backend buildInstanceCondition: objName);
+				 accessType: aString).
 
 	breakpointManager setDataBreakPointsFor: self
 ]
 
-{ #category : 'breakpoints' }
+{ #category : 'private - breakpoints' }
 SindarinDAPClient >> setBreakOnAllAttributesOf: objName mode: aString [
-	"Require supportDataBreakpoints.
-	aString is write | read | readWrite"
+	"aString is write | read | readWrite"
 
 	| frameId objRef objVars |
+	(self adapterSupport: 'supportsDataBreakpoints') ifFalse: [ ^ self ].
+
 	frameId := self currentFrameId.
 	objRef := self variableReferenceFor: objName inStackFrame: frameId.
 	objVars := self variablesForObject: objName inStackFrame: frameId.
 
 	objVars do: [ :variable |
-			| dataId |
-			dataId := self
-				          handleAsyncResponse: [ :response |
-						          self
-							          dataBreakpointInfo:
-								          (DAPDataBreakpointInfoArguments new
-									           variablesReference: objRef;
-									           frameId: frameId;
-									           name: (variable at: 'name'))
-							          onResponse: response ]
-				          returning: 'dataId'.
-
-			breakpointManager addDataBreakpoint: (DAPDataBreakpoint new
-					 dataId: dataId;
-					 condition: (self backend buildInstanceCondition: objName);
-					 accessType: aString) ].
+			self
+				helperAddDataBreakpointInfo: (DAPDataBreakpointInfoArguments new
+						 variablesReference: objRef;
+						 frameId: frameId;
+						 name: (variable at: 'name'))
+				breakpoint: (DAPDataBreakpoint new
+						 condition: (self backend buildInstanceCondition: objName);
+						 accessType: aString) ].
 
 	breakpointManager setDataBreakPointsFor: self
 ]
