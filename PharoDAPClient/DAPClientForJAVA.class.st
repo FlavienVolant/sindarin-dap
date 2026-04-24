@@ -17,19 +17,6 @@ DAPClientForJAVA >> attachArguments [
 		  ('projectName' -> 'java') } asDictionary
 ]
 
-{ #category : 'registry' }
-DAPClientForJAVA >> dapRegistryAt: keyAsString put: valueAsString [
-
-	self
-		stackTrace: (DAPStackTraceArguments new threadId: self mainThreadId)
-		onResponse: [ :resp |
-				self evaluate: (DAPEvaluateArguments new
-						 expression: 'System.setProperty("id_' , keyAsString
-							 , '", Integer.toString(System.identityHashCode('
-							 , valueAsString , ')))';
-						 frameId: (((resp at: 'body') at: 'stackFrames') first at: 'id')) ]
-]
-
 { #category : 'initialization' }
 DAPClientForJAVA >> initialize [
 
@@ -45,16 +32,4 @@ DAPClientForJAVA >> initialize [
 		line: 9;
 		backend: DAPBackendJAVA new;
 		startClientSession
-]
-
-{ #category : 'registry' }
-DAPClientForJAVA >> initializeDapRegistry [
-	" In Java, there is no need to initialize a global registry.
-	The java.lang.System object already exists and is globally accessible in the JVM.
-
-	We use it as a simple key/value store via System.setProperty / System.getProperty.
-
-	Because this storage is already built into the runtime, there is nothing to create or inject. "
-
-	
 ]
