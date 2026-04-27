@@ -13,7 +13,8 @@ BaselineOfPharoDAPClient >> baseline: spec [
 		baseline: 'PharoLanguageServer'
 		with: [
 		spec repository: 'github://FlavienVolant/Pharo-LanguageServer:v5' ].
-	spec package: 'PharoDAPClient'
+	spec package: 'PharoDAPClient'.
+	spec package: 'PharoDAPClient-Tests'.
 ]
 
 { #category : 'accessing' }
