@@ -6,6 +6,14 @@ The main goal of this project is to map Sindarin commands to their DAP equivalen
 
 The client currently works exclusively over socket connections.
 
+## Installation
+``` smalltalk
+Metacello new
+	baseline: 'PharoDAPClient';
+	repository: 'github://FlavienVolant/sindarin-dap:main';
+	load
+```
+
 ## Architecture
 
 ### `DAPClient`
