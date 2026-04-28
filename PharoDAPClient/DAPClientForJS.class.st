@@ -11,14 +11,15 @@ Class {
 
 { #category : 'initialization' }
 DAPClientForJS >> attachArguments [
-	
+
 	^ {
 		  ('name' -> 'attach pharo script.js').
 		  ('type' -> 'pwa-node').
 		  ('request' -> 'attach').
 		  ('address' -> 'localhost').
 		  ('port' -> '5005').
-		  ('continueOnAttach' -> true) } asDictionary
+		  ('continueOnAttach' -> true).
+		  ('skipFiles' -> { '<node_internals>/**' }) } asDictionary
 ]
 
 { #category : 'accessing' }
