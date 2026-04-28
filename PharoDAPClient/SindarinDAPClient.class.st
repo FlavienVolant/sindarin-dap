@@ -24,6 +24,19 @@ SindarinDAPClient >> backend: aDAPBackend [
 	backend clientDAP: self
 ]
 
+{ #category : 'accessing' }
+SindarinDAPClient >> breakpointManager [
+
+	^ breakpointManager
+]
+
+{ #category : 'stepping - steps' }
+SindarinDAPClient >> continue [
+
+	continueStrategy := StepUntilStrategy new.
+	continueStrategy continue: self
+]
+
 { #category : 'stack access' }
 SindarinDAPClient >> currentFrame [
 
@@ -272,24 +285,25 @@ SindarinDAPClient >> stepUntil: aPredicate [
 { #category : 'stepping - steps' }
 SindarinDAPClient >> stepUntilBlock: aBlock [
 
-	self flag: 'TODO'
+	[ self isExecutionFinished and: aBlock value ] whileFalse: [
+			self stepIn: (DAPStepInArguments new
+					 threadId: self mainThreadId;
+					 yourself).
+			self delayForResponse wait ]
 ]
 
 { #category : 'stepping - steps' }
 SindarinDAPClient >> stepUntilString: aString [
 
-	| threadId frameId bool |
-	threadId := 1.
-	bool := false.
-
-	[ bool ] whileFalse: [
-			frameId := (self currentStackFrame: threadId) at: 'id'.
-			bool := ((self evaluate: aString frameId: frameId) at: 'result')
-				        asLowercase = 'true'.
-
-			bool ifFalse: [
-					self stepIn: (DAPStepInArguments new threadId: threadId).
-					self delayForResponse wait ] ]
+	[
+		| result |
+		result := (self evaluate: aString frameId: self currentFrameId) at:
+			          'result'.
+		result asLowercase = 'true' ] whileFalse: [
+			self stepIn: (DAPStepInArguments new
+					 threadId: self mainThreadId;
+					 yourself).
+			self delayForResponse wait ]
 ]
 
 { #category : 'stack access' }

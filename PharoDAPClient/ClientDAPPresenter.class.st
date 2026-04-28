@@ -97,7 +97,7 @@ ClientDAPPresenter >> colorForMessage: messageAsDict [
 { #category : 'commands' }
 ClientDAPPresenter >> continue [
 
-	self continue: 1
+	[ clientDAP continue ] fork
 ]
 
 { #category : 'commands' }

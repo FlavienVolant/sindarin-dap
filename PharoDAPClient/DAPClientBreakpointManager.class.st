@@ -59,3 +59,18 @@ DAPClientBreakpointManager >> setFunctionBreakPointsFor: aDAPClient [
 		(DAPSetFunctionBreakpointsArguments new breakpoints:
 			 functionBreakpoints asArray)
 ]
+
+{ #category : 'asserting' }
+DAPClientBreakpointManager >> shouldBreakFor: aDAPStackFrame [
+	
+	"
+	for every bp
+		if one correspond to the stackFrame
+			eval it's the condition 
+			if true 
+				return true
+	return false
+	"
+	
+	^ false
+]
