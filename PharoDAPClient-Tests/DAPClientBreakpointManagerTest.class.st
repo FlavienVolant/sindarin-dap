@@ -99,7 +99,9 @@ DAPClientBreakpointManagerTest >> testShouldNotBreakWhenFunctionNameDoesNotMatch
 	bpManger := DAPClientBreakpointManager new.
 	bpManger addFunctionBreakpoint:
 		(DAPFunctionBreakpoint new name: 'toto').
-	
+	bpManger addFunctionBreakpoint:
+		(DAPFunctionBreakpoint new name: 'tata').
+
 	frame := {
 		         ('source' -> {
 			          ('path' -> 'path/to/python/file.py').
