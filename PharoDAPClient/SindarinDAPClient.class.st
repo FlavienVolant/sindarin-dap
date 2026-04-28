@@ -3,7 +3,8 @@ Class {
 	#superclass : 'DAPClient',
 	#instVars : [
 		'backend',
-		'breakpointManager'
+		'breakpointManager',
+		'continueStrategy'
 	],
 	#category : 'PharoDAPClient-Model',
 	#package : 'PharoDAPClient',
@@ -40,12 +41,6 @@ SindarinDAPClient >> currentFrame [
 SindarinDAPClient >> currentFrameId [
 
 	^ self currentFrame at: 'id'
-]
-
-{ #category : 'stack access' }
-SindarinDAPClient >> currentStackFrame: threadId [
-
-	^ (self stackFrames: threadId) first
 ]
 
 { #category : 'private' }
