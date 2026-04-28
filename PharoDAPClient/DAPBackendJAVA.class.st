@@ -11,6 +11,8 @@ DAPBackendJAVA >> constructorsOf: classExpr [
 	"Return a collection of string corresponding to the full name of the constructors of classExpr. 
 	Names are send to function breakpoint name"
 
+	self flag: 'hard coded'.
+
 	^ { ('example.' , classExpr , '#<init>') }
 ]
 
@@ -58,8 +60,12 @@ DAPBackendJAVA >> methodsOf: objExpr [
 	| evalResp |
 	evalResp := clientDAP
 		            evaluate:
-			            'java.util.Arrays.stream(bar.getClass().getMethods())
-    .map(m -> bar.getClass().getPackage().getName() + "." + bar.getClass().getSimpleName() + "#" + m.getName())
+			            'java.util.Arrays.stream(' , objExpr
+			            , '.getClass().getMethods())
+    .map(m -> ' , objExpr
+			            , '.getClass().getPackage().getName() + "." + '
+			            , objExpr
+			            , '.getClass().getSimpleName() + "#" + m.getName())
     .toList()'
 		            frameId: clientDAP currentFrameId.
 
