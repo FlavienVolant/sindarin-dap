@@ -76,12 +76,15 @@ DAPClientForJS >> initializeDapRegistry [
 
 { #category : 'initialization' }
 DAPClientForJS >> startSession [
-	
+
 	DAPClientBuilder new
 		client: self;
 		adapterID: 'node';
 		port: 5678;
 		attachArguments: self attachArguments;
-		breakpoint: '/Users/flavienvolant/Documents/sindarin-dap/js/script.js' line: 1;
-		startClientSession 
+		breakpoint:
+			'/Users/flavienvolant/Documents/sindarin-dap/js/script.js'
+		line: 1;
+		backend: DAPBackendJS new;
+		startClientSession
 ]
