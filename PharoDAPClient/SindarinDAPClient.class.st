@@ -132,17 +132,25 @@ SindarinDAPClient >> haltOnWrite: objName attribute: attrName [
 ]
 
 { #category : 'private' }
+SindarinDAPClient >> handleAsyncRawResponse: anAction [
+    | response |
+
+    response := nil.
+
+    anAction value: [ :resp | response := resp ].
+
+    [ response ] whileNil: [ (Delay forMilliseconds: 10) wait ].
+
+    ^ response
+]
+
+{ #category : 'private' }
 SindarinDAPClient >> handleAsyncResponse: anAction [
 	"anAction is a block that takes a single argument, a block to receive the response.
     This method waits for the response, checks for errors, and returns the response body."
 
 	| response |
-	response := nil.
-
-	anAction value: [ :resp | response := resp ].
-	self delayForResponse wait.
-
-	response ifNil: [ ^ Error new signal: 'Response timeout !' ].
+	response := self handleAsyncRawResponse: anAction.
 
 	(response at: 'success') ifFalse: [
 		^ Error new signal: 'Request failed !' ].
@@ -286,10 +294,12 @@ SindarinDAPClient >> stepUntil: aPredicate [
 SindarinDAPClient >> stepUntilBlock: aBlock [
 
 	[ self isExecutionFinished and: aBlock value ] whileFalse: [
-			self stepIn: (DAPStepInArguments new
-					 threadId: self mainThreadId;
-					 yourself).
-			self delayForResponse wait ]
+			self handleAsyncRawResponse: [ :resp |
+					self
+						stepIn: (DAPStepInArguments new
+								 threadId: self mainThreadId;
+								 yourself)
+						onResponse: resp ] ]
 ]
 
 { #category : 'stepping - steps' }
@@ -300,10 +310,12 @@ SindarinDAPClient >> stepUntilString: aString [
 		result := (self evaluate: aString frameId: self currentFrameId) at:
 			          'result'.
 		result asLowercase = 'true' ] whileFalse: [
-			self stepIn: (DAPStepInArguments new
-					 threadId: self mainThreadId;
-					 yourself).
-			self delayForResponse wait ]
+			self handleAsyncRawResponse: [ :resp |
+					self
+						stepIn: (DAPStepInArguments new
+								 threadId: self mainThreadId;
+								 yourself)
+						onResponse: resp ] ]
 ]
 
 { #category : 'stack access' }
