@@ -379,14 +379,7 @@ ClientDAPPresenter >> stackTrace: aThreadId onResponse: aBlock [
 	| args |
 	args := DAPStackTraceArguments new
 		        threadId: aThreadId;
-		        format: {
-				        (#parameters -> true).
-				        (#parameterTypes -> true).
-				        (#parameterNames -> true).
-				        (#parameterValues -> true).
-				        (#line -> true).
-				        (#module -> true).
-				        (#includeAll -> true) } asDictionary;
+		        format: { (#module -> true) } asDictionary;
 		        yourself.
 
 	clientDAP stackTrace: args onResponse: aBlock
