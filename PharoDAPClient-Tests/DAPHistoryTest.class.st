@@ -1,15 +1,25 @@
 Class {
 	#name : 'DAPHistoryTest',
 	#superclass : 'TestCase',
+	#instVars : [
+		'history'
+	],
 	#category : 'PharoDAPClient-Tests',
 	#package : 'PharoDAPClient-Tests'
 }
 
+{ #category : 'running' }
+DAPHistoryTest >> setUp [
+
+	super setUp.
+
+	history := DAPHistory new
+]
+
 { #category : 'tests' }
 DAPHistoryTest >> testEventsOfTypeReturnACollectionOfEventBasedOnTheirType [
 
-	| history breakpoints stopped continued |
-	history := DAPHistory new.
+	| breakpoints stopped continued |
 
 	1 to: 5 do: [ :i |
 			history addEvent: DAPBreakpointEvent new asDAPJSON.
@@ -36,10 +46,57 @@ DAPHistoryTest >> testEventsOfTypeReturnACollectionOfEventBasedOnTheirType [
 ]
 
 { #category : 'tests' }
+DAPHistoryTest >> testLastResponseForCommand [
+
+	| a b |
+	a := { ('command' -> 'attach') } asDictionary.
+	history addResponse: a.
+	
+	b := { ('command' -> 'restart') } asDictionary.
+	history addResponse: b.
+	
+	self
+		assert: (history lastResponseForCommand: 'attach')
+		equals: a.
+		
+	self
+		assert: (history lastResponseForCommand: 'restart')
+		equals: b
+]
+
+{ #category : 'tests' }
+DAPHistoryTest >> testLastResponseForCommandEmpty [
+
+	self
+		assert: (history lastResponseForCommand: 'restart')
+		equals: nil
+]
+
+{ #category : 'tests' }
+DAPHistoryTest >> testLastResponseForCommandNoSpecifyCommand [
+
+	self
+		assert: (history lastResponseForCommand: 'restart')
+		equals: nil
+]
+
+{ #category : 'tests' }
+DAPHistoryTest >> testLastResponseForCommandTwoCommandsWithTheSameType [
+
+	| a b |
+	a := { ('command' -> 'attach') } asDictionary.
+	history addResponse: a.
+
+	b := { ('command' -> 'attach') } asDictionary.
+	history addResponse: b.
+
+	self assert: (history lastResponseForCommand: 'attach') equals: b
+]
+
+{ #category : 'tests' }
 DAPHistoryTest >> testMessagesShouldReturnInReverseChronologicalOrder [
 
-	| history seq |
-	history := DAPHistory new.
+	| seq |
 	seq := 1.
 
 	1 to: 5 do: [ :_ |
@@ -66,8 +123,7 @@ DAPHistoryTest >> testMessagesShouldReturnInReverseChronologicalOrder [
 { #category : 'tests' }
 DAPHistoryTest >> testResponseForRequestReturnNilIfNoCorrespondingResponseExist [
 
-	| history request |
-	history := DAPHistory new.
+	| request |
 	request := DAPStackTraceRequest new
 		           seq: 3;
 		           asDAPJSON.
@@ -79,8 +135,7 @@ DAPHistoryTest >> testResponseForRequestReturnNilIfNoCorrespondingResponseExist 
 { #category : 'tests' }
 DAPHistoryTest >> testResponseForRequestReturnTheCorrespondingResponseToARequestSequence [
 
-	| history request response |
-	history := DAPHistory new.
+	| request response |
 	request := DAPStackTraceRequest new
 		           seq: 3;
 		           asDAPJSON.

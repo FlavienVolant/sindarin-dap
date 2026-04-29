@@ -67,9 +67,9 @@ DAPHistory >> initialize [
 { #category : 'accessing' }
 DAPHistory >> lastResponseForCommand: aString [
 
-	^ responses reversed
-		  detect: [ :resp | (resp at: 'command') = aString ]
-		  ifNone: [ nil ]
+	responses reverseDo: [ :resp |
+		(resp at: 'command') = aString ifTrue: [ ^ resp ] ].
+	^ nil
 ]
 
 { #category : 'accessing' }
