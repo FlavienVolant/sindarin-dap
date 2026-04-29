@@ -92,10 +92,9 @@ DAPClientBreakpointManager >> shouldBreakFor: aDAPStackFrame evaluator: clientDA
 	functionName := self extractFunctionName:
 		                (self normalizeFrameName:
 			                 (aDAPStackFrame at: 'name')).
-
 	^ functionBreakpoints anySatisfy: [ :breakpoint |
 			  breakpoint name = functionName and: [
 					  clientDAP
-						  evaluate: breakpoint condition
+						  evaluateBoolean: breakpoint condition
 						  frameId: (aDAPStackFrame at: 'id') ] ]
 ]

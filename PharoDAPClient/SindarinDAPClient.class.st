@@ -74,6 +74,15 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 					  onResponse: onResponse ]
 ]
 
+{ #category : 'evaluating' }
+SindarinDAPClient >> evaluateBoolean: aString frameId: aNumber [
+
+	| resp |
+	resp := self evaluate: aString frameId: aNumber.
+
+	^ (resp at: 'result') asLowercase = 'true'
+]
+
 { #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOn: objName message: msgName [
 
@@ -293,7 +302,7 @@ SindarinDAPClient >> stepUntil: aPredicate [
 { #category : 'stepping - steps' }
 SindarinDAPClient >> stepUntilBlock: aBlock [
 
-	[ self isExecutionFinished and: aBlock value ] whileFalse: [
+	[ self isExecutionFinished or: aBlock value ] whileFalse: [
 			self handleAsyncRawResponse: [ :resp |
 					self
 						stepIn: (DAPStepInArguments new
@@ -306,16 +315,15 @@ SindarinDAPClient >> stepUntilBlock: aBlock [
 SindarinDAPClient >> stepUntilString: aString [
 
 	[
-		| result |
-		result := (self evaluate: aString frameId: self currentFrameId) at:
-			          'result'.
-		result asLowercase = 'true' ] whileFalse: [
-			self handleAsyncRawResponse: [ :resp |
-					self
-						stepIn: (DAPStepInArguments new
-								 threadId: self mainThreadId;
-								 yourself)
-						onResponse: resp ] ]
+		self isExecutionFinished or: [
+			self evaluateBoolean: aString frameId: self currentFrameId ] ]
+		whileFalse: [
+				self handleAsyncRawResponse: [ :resp |
+						self
+							stepIn: (DAPStepInArguments new
+									 threadId: self mainThreadId;
+									 yourself)
+							onResponse: resp ] ]
 ]
 
 { #category : 'stack access' }
