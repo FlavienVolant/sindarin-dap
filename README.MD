@@ -261,7 +261,16 @@ Look for a file like:
 com.microsoft.java.debug.plugin-<version>.jar
 ```
 
+### Preparing the Target JVM
 
+The Java program must be started in debug mode using **JDWP**, so the debugger can attach to it:
+
+```bash
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005 \
+  -cp target/classes \
+  example.Main
+```
+This starts the JVM in debug mode and listens on port 5005.
 
 ### Starting the LSP Server with java-debug
 
@@ -304,9 +313,19 @@ Use `DAPClientForJAVA` and configure it with the port returned by the LSP server
 		condition:
 			'true';
 		startClientSession
+
+attachArguments
+
+	^ {
+		  ('name' -> 'Attach to Java').
+		  ('type' -> 'server').
+		  ('hostName' -> 'localhost').
+		  ('port' -> 5005).
+		  ('projectName' -> 'java') } asDictionary
 ```
 
 ### Starting the Debugging Session
+- Start your Java program with JDWP enabled
 - Start `eclipse.jdt.ls` with the `java-debug` plugin
 - Send the `vscode.java.startDebugSession` command via your LSP client
 - Retrieve the port from the response
