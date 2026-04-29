@@ -302,7 +302,7 @@ SindarinDAPClient >> stepUntil: aPredicate [
 { #category : 'stepping - steps' }
 SindarinDAPClient >> stepUntilBlock: aBlock [
 
-	[ self isExecutionFinished or: aBlock value ] whileFalse: [
+	[ self isExecutionFinished or: [ aBlock value ] ] whileFalse: [
 			self handleAsyncRawResponse: [ :resp |
 					self
 						stepIn: (DAPStepInArguments new
