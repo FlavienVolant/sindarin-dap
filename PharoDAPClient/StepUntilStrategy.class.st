@@ -11,6 +11,7 @@ StepUntilStrategy >> continue: sindarinDAPClient [
 	"work in progress for function bp only"
 
 	sindarinDAPClient stepUntil: [
-			sindarinDAPClient breakpointManager shouldBreakFor:
-				sindarinDAPClient currentFrame ]
+			sindarinDAPClient breakpointManager
+				shouldBreakFor: sindarinDAPClient currentFrame
+				evaluator: sindarinDAPClient ]
 ]

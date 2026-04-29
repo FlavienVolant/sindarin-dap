@@ -93,6 +93,30 @@ DAPClientBreakpointManagerTest >> testShouldBreakWhenAtLeastOneFunctionBreakpoin
 ]
 
 { #category : 'tests' }
+DAPClientBreakpointManagerTest >> testShouldBreakWhenFunctionbreakpointConditionIsTrue [
+
+	| bpManger evaluator frame |
+	bpManger := DAPClientBreakpointManager new.
+	bpManger addFunctionBreakpoint: (DAPFunctionBreakpoint new
+			 name: 'toto';
+			 condition: 'true').
+
+	evaluator := Mock new.
+	(evaluator stub evaluate: Any frameId: Any) willReturn: true.
+
+	frame := {
+		         ('source' -> {
+			          ('path' -> 'path/to/python/file.py').
+			          ('sourceReference' -> 0) } asDictionary).
+		         ('line' -> 3).
+		         ('column' -> 1).
+		         ('name' -> 'bar.toto').
+		         ('id' -> 4) } asDictionary.
+
+	self assert: (bpManger shouldBreakFor: frame evaluator: evaluator)
+]
+
+{ #category : 'tests' }
 DAPClientBreakpointManagerTest >> testShouldNotBreakWhenFunctionNameDoesNotMatchBreakpoint [
 
 	| bpManger frame |
@@ -112,6 +136,30 @@ DAPClientBreakpointManagerTest >> testShouldNotBreakWhenFunctionNameDoesNotMatch
 		         ('id' -> 4) } asDictionary.
 
 	self deny: (bpManger shouldBreakFor: frame)
+]
+
+{ #category : 'tests' }
+DAPClientBreakpointManagerTest >> testShouldNotBreakWhenFunctionbreakpointConditionIsFalse [
+
+	| bpManger evaluator frame |
+	bpManger := DAPClientBreakpointManager new.
+	bpManger addFunctionBreakpoint: (DAPFunctionBreakpoint new
+			 name: 'toto';
+			 condition: 'false').
+
+	evaluator := Mock new.
+	(evaluator stub evaluate: Any frameId: Any) willReturn: false.
+
+	frame := {
+		         ('source' -> {
+			          ('path' -> 'path/to/python/file.py').
+			          ('sourceReference' -> 0) } asDictionary).
+		         ('line' -> 3).
+		         ('column' -> 1).
+		         ('name' -> 'bar.toto').
+		         ('id' -> 4) } asDictionary.
+
+	self deny: (bpManger shouldBreakFor: frame evaluator: evaluator)
 ]
 
 { #category : 'tests' }
