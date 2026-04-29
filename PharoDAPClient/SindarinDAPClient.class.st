@@ -33,8 +33,9 @@ SindarinDAPClient >> breakpointManager [
 { #category : 'stepping - steps' }
 SindarinDAPClient >> continue [
 
-	continueStrategy := StepUntilStrategy new.
-	continueStrategy continue: self
+	(self adapterSupport: 'supportsFunctionBreakpoints')
+		ifTrue: [ DebugContinueStrategy new continue: self ]
+		ifFalse: [ StepUntilStrategy new continue: self ]
 ]
 
 { #category : 'stack access' }
