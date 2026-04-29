@@ -65,6 +65,14 @@ DAPHistory >> initialize [
 ]
 
 { #category : 'accessing' }
+DAPHistory >> lastResponseForCommand: aString [
+
+	^ responses reversed
+		  detect: [ :resp | (resp at: 'command') = aString ]
+		  ifNone: [ nil ]
+]
+
+{ #category : 'accessing' }
 DAPHistory >> messages [
 
 	| all |
