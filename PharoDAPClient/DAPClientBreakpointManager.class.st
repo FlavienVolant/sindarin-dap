@@ -86,20 +86,6 @@ DAPClientBreakpointManager >> setFunctionBreakPointsFor: aDAPClient [
 ]
 
 { #category : 'asserting' }
-DAPClientBreakpointManager >> shouldBreakFor: aDAPStackFrame [
-
-	| functionName |
-	self deprecated: 'Use shouldBreakFor:evaluator:'.
-
-	functionName := self extractFunctionName:
-		                (self normalizeFrameName:
-			                 (aDAPStackFrame at: 'name')).
-
-	^ functionBreakpoints anySatisfy: [ :breakpoint |
-		  breakpoint name = functionName ]
-]
-
-{ #category : 'asserting' }
 DAPClientBreakpointManager >> shouldBreakFor: aDAPStackFrame evaluator: clientDAP [
 
 	| functionName |
