@@ -84,6 +84,19 @@ SindarinDAPClient >> evaluateBoolean: aString frameId: aNumber [
 	^ (resp at: 'result') asLowercase = 'true'
 ]
 
+{ #category : 'accessing' }
+SindarinDAPClient >> getLine: aNumber from: aString [
+
+	^ aString asFileReference readStreamDo: [ :stream |
+			  | index line |
+			  index := 0.
+			  [ stream atEnd ] whileFalse: [
+					  line := stream nextLine.
+					  index := index + 1.
+					  index = aNumber ifTrue: [ ^ line ] ].
+			  nil ]
+]
+
 { #category : 'api - breakpoints' }
 SindarinDAPClient >> haltOn: objName message: msgName [
 
