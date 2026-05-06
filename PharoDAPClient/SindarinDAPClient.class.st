@@ -163,7 +163,7 @@ SindarinDAPClient >> handleAsyncResponse: anAction [
 	response := self handleAsyncRawResponse: anAction.
 
 	(response at: 'success') ifFalse: [
-		^ Error new signal: 'Request failed !' ].
+		^ RequestFailedError new signal: 'Request failed !' ].
 
 	^ response at: 'body'
 ]
@@ -314,14 +314,16 @@ SindarinDAPClient >> stackFrames: threadId [
 SindarinDAPClient >> stepUntil: aPredicate [
 	"aPredicate is expected to be a ByteString or a BlockClosure"
 
-	aPredicate stepUntilOn: self
+	[aPredicate stepUntilOn: self] on: RequestFailedError do: [ :ex | ]
 ]
 
 { #category : 'stepping - steps' }
 SindarinDAPClient >> stepUntil: aPredicate do: aBlock [
 	"aPredicate is expected to be a ByteString or a BlockClosure"
 
-	aPredicate stepUntilOn: self do: aBlock
+	[ aPredicate stepUntilOn: self do: aBlock ]
+		on: RequestFailedError
+		do: [ :ex |  ]
 ]
 
 { #category : 'stepping - steps' }
