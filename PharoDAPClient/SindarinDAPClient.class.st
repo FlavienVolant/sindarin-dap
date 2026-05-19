@@ -250,6 +250,21 @@ SindarinDAPClient >> mainThreadId [
 ]
 
 { #category : 'stack access' }
+SindarinDAPClient >> receiver [
+
+	| frameId local variables |
+	frameId := self currentFrameId.
+	local := (self scopesForFrame: frameId) first at:
+		         'variablesReference'.
+
+	variables := self variablesForReference: local.
+
+	variables size < 1 ifTrue: [ ^ nil ].
+
+	^ variables first
+]
+
+{ #category : 'stack access' }
 SindarinDAPClient >> scopesForFrame: aFrameId [
 	"take a valid frame id and return a collection of DAPScope"
 
@@ -259,6 +274,19 @@ SindarinDAPClient >> scopesForFrame: aFrameId [
 					  scopes: (DAPScopesArguments new frameId: aFrameId)
 					  onResponse: onResponse ]
 		  returning: 'scopes'
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> sender [
+
+	| stackFrames frameId |
+	stackFrames := self stackFrames: self mainThreadId.
+
+	stackFrames size < 2 ifTrue: [ ^ nil ].
+
+	frameId := stackFrames second at: 'id'.
+	
+	^ self variableFor: backend instanceName inStackFrame: frameId
 ]
 
 { #category : 'private - breakpoints' }
