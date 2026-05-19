@@ -76,6 +76,14 @@ SindarinDAPClient >> evaluate: aString frameId: aNumber [
 ]
 
 { #category : 'evaluating' }
+SindarinDAPClient >> evaluate: aString frameId: aNumber onErrorDo: aBlock [
+
+	^ [ self evaluate: aString frameId: aNumber ]
+		  on: RequestFailedError
+		  do: [ :ex | aBlock value ]
+]
+
+{ #category : 'evaluating' }
 SindarinDAPClient >> evaluateBoolean: aString frameId: aNumber [
 
 	| resp |
