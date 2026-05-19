@@ -421,16 +421,25 @@ SindarinDAPClient >> stepUntilString: aString do: aBlock [
 ]
 
 { #category : 'stack access' }
-SindarinDAPClient >> variableReferenceFor: aVariableName inStackFrame: frameId [
-
-	"return the dap variable reference for aVariableName in the frameId stack frame"
+SindarinDAPClient >> variableFor: aVariableName inStackFrame: frameId [
+	"return the dap variable for aVariableName in the frameId stack frame"
 
 	| varRefScopeLocal variablesLocal |
 	varRefScopeLocal := (self scopesForFrame: frameId) first at:
 		                    'variablesReference'.
 	variablesLocal := self variablesForReference: varRefScopeLocal.
-	^ (variablesLocal detect: [ :var | (var at: 'name') = aVariableName ])
-		  at: 'variablesReference'
+	^ variablesLocal
+		  detect: [ :var | (var at: 'name') = aVariableName ]
+		  ifNone: [ nil ]
+]
+
+{ #category : 'stack access' }
+SindarinDAPClient >> variableReferenceFor: aVariableName inStackFrame: frameId [
+	"return the dap variable reference for aVariableName in the frameId stack frame"
+	| var |
+	var := self variableFor: aVariableName inStackFrame: frameId.
+	var ifNil: [ ^ nil ].
+	^ var at: 'variablesReference'.
 ]
 
 { #category : 'stack access' }
